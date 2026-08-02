@@ -1,0 +1,29 @@
+# Context Window Management
+
+A model's context window is the maximum number of tokens it can attend to
+in a single call, spanning the system prompt, conversation history, tool
+definitions, retrieved documents, and the model's own output. Even as
+context windows have grown to hundreds of thousands of tokens, context
+management remains a real engineering concern for three reasons: cost
+(providers typically charge per input token, so a bloated prompt has a
+direct dollar cost per call), latency (larger prompts take longer to
+process before the model can start generating), and quality (models are
+measurably better at using information near the beginning or end of a long
+context than information buried in the middle, an effect sometimes called
+"lost in the middle").
+
+For RAG and agent systems specifically, context grows every turn: each
+retrieved passage, each tool result, each prior message adds tokens that
+persist for the rest of the conversation unless something is done about it.
+Common mitigations include truncating or summarizing older turns once a
+budget is exceeded, only including the top-k most relevant retrieved
+passages rather than everything a search returned, and compressing tool
+results (returning a summary or the specific fields needed rather than a
+full raw payload) before they enter the conversation.
+
+A related and easy-to-miss failure mode is that an agent with many
+available tools pays a fixed context cost for every tool's name, description,
+and schema on every single call, whether or not that tool is used — which
+is one reason production agents often organize tools into a smaller,
+task-relevant subset rather than exposing every tool the system has to
+every call.

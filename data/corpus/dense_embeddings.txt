@@ -1,0 +1,24 @@
+# Dense Embeddings for Retrieval
+
+A dense embedding model maps text into a fixed-size vector such that
+semantically similar text ends up close together under a distance metric,
+usually cosine similarity or dot product. Unlike sparse lexical matching,
+dense embeddings can find a passage about "canines" when the query says
+"dogs," because the model learned that relationship from training data
+rather than requiring an exact token match.
+
+Modern embedding models are typically transformer encoders trained with a
+contrastive objective: pairs of texts known to be related (a question and
+its answer passage, or two paraphrases) are pulled together in vector space
+while unrelated pairs are pushed apart. Sentence-transformer models such as
+all-MiniLM-L6-v2 are popular for retrieval because they are small enough to
+run cheaply per-query while still producing useful vector similarity for
+short passages.
+
+Dense retrieval has weaknesses that pure semantic matching doesn't fix:
+exact identifiers (product SKUs, error codes, rare proper nouns) are often
+represented poorly because the model has little training signal for them,
+and embeddings can conflate topically similar but factually different
+passages. This is the main reason production retrieval systems rarely use
+dense embeddings alone; they combine them with lexical methods like BM25 to
+cover both semantic and exact-match queries.

@@ -1,27 +1,17 @@
-"""Minimal training loop stub.
-Skips if torch is not installed; useful to keep tests light in CI.
-"""
+"""CLI entrypoint: train the learned reranker and report its metrics."""
+
+from __future__ import annotations
+
+import json
+
+from ml.reranker import train_and_evaluate
 
 
-def train_minimal(epochs: int = 1) -> float | None:
-    try:
-        import torch
-        import torch.nn as nn
-        import torch.optim as optim
+def main() -> dict[str, object]:
+    report = train_and_evaluate()
+    print(json.dumps(report, indent=2))
+    return report
 
-        x = torch.randn(64, 10)
-        y = torch.randn(64, 1)
-        model = nn.Sequential(nn.Linear(10, 32), nn.ReLU(), nn.Linear(32, 1))
-        opt = optim.Adam(model.parameters(), lr=1e-3)
-        loss_fn = nn.MSELoss()
-        model.train()
-        for _ in range(epochs):
-            opt.zero_grad()
-            pred = model(x)
-            loss = loss_fn(pred, y)
-            loss.backward()
-            opt.step()
-        return float(loss.detach().cpu())
-    except Exception:
-        # Torch not installed or CPU-only environment; return sentinel.
-        return None
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,29 @@
+# Chunking Strategies for Retrieval
+
+Chunking splits long documents into smaller passages before indexing,
+because embedding models have a limited effective context and because
+retrieval precision improves when a returned unit is focused on one topic
+rather than diluted across an entire document. The chunk size is a
+tradeoff: chunks that are too large dilute the embedding with irrelevant
+content and waste context budget in the prompt; chunks that are too small
+lose surrounding context needed to answer correctly and multiply the number
+of vectors that must be indexed and searched.
+
+A naive approach splits text every N characters. This is fast and simple
+but frequently cuts sentences and paragraphs in half, which can produce
+chunks that are syntactically broken and semantically incoherent. A better
+approach splits on natural boundaries — sentences, paragraphs, or markdown
+headings — and only falls back to a hard character split when a single
+unit (for example, one very long sentence) exceeds the target size on its
+own.
+
+Overlap between consecutive chunks is a common mitigation for boundary
+loss: keeping the last N characters of one chunk as the start of the next
+means a fact that would otherwise be split across a chunk boundary still
+appears whole in at least one chunk. Overlap increases index size and some
+redundancy in retrieved results, so it is usually kept to a modest fraction
+of the chunk size (10-20% is typical) rather than being large.
+
+The right chunk size is corpus- and query-dependent, which is why it is
+worth sweeping the parameter empirically against retrieval metrics like
+recall@k rather than picking a single default and assuming it generalizes.

@@ -1,0 +1,31 @@
+# Latency and Cost Tradeoffs in Production LLM Systems
+
+Every design decision in an LLM-backed system trades off against latency
+and cost, and the tradeoffs compound across a pipeline rather than staying
+isolated to one component. A larger, more capable model is typically both
+slower and more expensive per token than a smaller one, so the choice of
+model is often the single biggest lever on both dimensions — which is why
+many production systems use a smaller, cheaper model for easy or
+high-volume tasks (classification, simple extraction) and reserve a larger
+model for the subset of requests that actually need its extra capability, a
+pattern sometimes called model cascading or routing.
+
+Within a single call, prompt length matters directly: providers typically
+price input and output tokens separately (and often output tokens cost
+more per token than input, since they must be generated sequentially rather
+than processed in parallel), so a RAG system that retrieves more context
+than it needs, or an agent that carries unnecessary history across many
+turns, pays for that bloat on every single call, not just the first one.
+
+Caching is one of the most effective cost levers precisely because LLM
+workloads are often repetitive at some layer: repeated system prompts,
+repeated tool definitions, or repeated documents in a RAG context can be
+cached by the provider (prompt caching) or by the application (caching
+embeddings, caching retrieval results for popular queries, caching full
+responses for identical requests) to avoid redundant computation.
+
+Latency and cost are not always aligned in the same direction: streaming a
+response reduces perceived latency (the user sees the first tokens quickly)
+without reducing total cost or total generation time, while a smaller model
+reduces both simultaneously but at a real quality cost that needs to be
+measured, not assumed acceptable, before it's adopted for a given task.

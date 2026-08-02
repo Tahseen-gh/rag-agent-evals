@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 
     # App
-    app_name: str = "phase1-api"
+    app_name: str = "domain-rag-evals-api"
     debug: bool = False
 
     # Auth
@@ -34,6 +34,13 @@ class Settings(BaseSettings):
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
     hybrid_alpha: float = 0.5
     use_dummy_embeddings: bool = True
+    rag_top_k: int = 4
+
+    # Generation / agent
+    anthropic_api_key: str | None = None
+    llm_model: str = "claude-sonnet-5"
+    use_dummy_llm: bool = True
+    agent_max_turns: int = 6
 
 
 settings = Settings()

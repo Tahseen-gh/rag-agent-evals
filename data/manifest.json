@@ -1,0 +1,32 @@
+{
+  "docs": {
+    "retrieval_augmented_generation.txt": "427c2862b5dd580095f556a6bc04cb6ae204163284f236b3fd7ccc2b693b2306",
+    "dense_embeddings.txt": "a66ba922378fa1aaa44abb6640e95f4efee5d441497e20e74d56966a53937632",
+    "sparse_retrieval_bm25.txt": "92d69fcb4f7cf5289408e353f1785f427b6dc1f14344711597c4630219f5f340",
+    "hybrid_retrieval_fusion.txt": "7d31d0c398b794a68a120616968d4e552136161b2d74b95188b883ca797a4957",
+    "chunking_strategies.txt": "34328d4b80ce54684ecdf77dace64d9c7dc8671051ccf613e32ec1e0b2ef0be9",
+    "vector_databases.txt": "b717310e42ce9627eb4819e4cd43573ae13df5a15760ee1ecc6e76902aaede9e",
+    "reranking_models.txt": "56fc768197c6b2cf4ed070720638baa53906ccab11cec27e71e78ce9d90e3eca",
+    "embedding_evaluation_metrics.txt": "8774aec6f171238ff5663bf91f97122e289699a7a7529a27cf0a7ab847581d06",
+    "rag_evaluation_ragas.txt": "a462775d76fdbd033a841785163ee53f2588b948c7ec270218b740547e8e7072",
+    "llm_as_judge.txt": "0991fe1273e560fb321df788e5f399ecc66a629f496b6a469d734f332b3e5eae",
+    "prompt_engineering_basics.txt": "84ec2187b3739b115b55732517cbf8f91636e2b68b8b15cbcfa6b6a17f1e42e0",
+    "structured_outputs.txt": "3a119e3f562902fe1576d494faa6021f4447fecf647f843f250f91f8b2bcdb0f",
+    "tool_use_function_calling.txt": "2365393a16992e56b9ec7e0e5155cb7dbd5b21ec900679719dd8e1b5344ee31a",
+    "agentic_workflows.txt": "657fdf6caac36092b2b5f1f5269a1be334243c869d9ff875aa82d59198194faa",
+    "react_agent_pattern.txt": "ede6997057c32b013a3f0e31769183fcc4aa3c0c09e4d38183dcc37ff87ca126",
+    "context_window_management.txt": "433313ea5182f60401c327db180f0def7889609b9002407e8a3895ad5e0d1910",
+    "prompt_injection_attacks.txt": "6e893015fa127b36a3f269a5a765905afe99ac8a56b432f2fe318422c38cce02",
+    "jailbreaking_and_red_teaming.txt": "76167e9764f6b1bc1dbbae8951026652eeb98cb6e102bda4ed6ad87e932fabba",
+    "constitutional_ai.txt": "5e8b88a691abed79ecf107279e2b3af9c564a194aacc2b7445d707cc7cfdbf9d",
+    "rlhf_overview.txt": "8774c0b71be14919dcec70757e28f8aa101355f17a7efafbdb23ca522819f7cf",
+    "hallucination_mitigation.txt": "0dc7cfcb254f3752e62f8bee4740f148b80937a39ff7f15d804a24ab3deaae1d",
+    "citation_grounding.txt": "b46003af5fa9cab7f9cece11ce8794ad0c966a9e49d43f5075a7691af5858ca6",
+    "latency_cost_tradeoffs.txt": "5482c6ea6f54220d8d1f9961b7067cdba8aaa41437d3939a8c818bb51eb48a48",
+    "observability_for_llm_apps.txt": "460903431bbae9f349f0f6c334e7907d9413bf701d6af95ab953c49c4ea67907"
+  },
+  "docs_count": 24,
+  "queries_count": 49,
+  "created_at": "2026-08-02T10:05:14.529863+00:00",
+  "version": "b946b45a"
+}

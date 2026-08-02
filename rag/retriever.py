@@ -6,19 +6,11 @@ from .backends.base import RetrievalBackend
 from .backends.bm25 import BM25Backend
 from .backends.embed import DummyEmbeddingModel, EmbeddingBackend, EmbeddingModel
 from .backends.hybrid import HybridBackend
+from .backends.learned import LearnedRerankBackend
+from .ingestion import load_corpus
 
-# Small in-memory corpus for demo purposes
-_CORPUS = [
-    ("doc1", "the cat sat on the mat"),
-    ("doc2", "dogs are great pets"),
-    ("doc3", "I love pizza"),
-    ("doc4", "the quick brown fox"),
-    ("doc5", "fastapi makes apis fast"),
-]
-
-_DOC_IDS = [d for d, _ in _CORPUS]
-_DOC_TEXTS = [t for _, t in _CORPUS]
-DOCS_BY_ID: dict[str, str] = {d: t for d, t in _CORPUS}
+_DOC_TEXTS, _DOC_IDS = load_corpus()
+DOCS_BY_ID: dict[str, str] = dict(zip(_DOC_IDS, _DOC_TEXTS, strict=True))
 
 _BACKENDS: dict[str, RetrievalBackend] = {}
 
@@ -62,6 +54,10 @@ def get_backend(
         em = EmbeddingBackend(model)
         em.build(_DOC_TEXTS, _DOC_IDS)
         backend = HybridBackend(bm, em, alpha=hybrid_alpha)
+    elif name == "learned":
+        model = _embedding_model(embedding_model, use_dummy_embeddings)
+        backend = LearnedRerankBackend(BM25Backend(), EmbeddingBackend(model))
+        backend.build(_DOC_TEXTS, _DOC_IDS)
     else:
         raise ValueError(f"unknown backend: {name}")
     _BACKENDS[name] = backend

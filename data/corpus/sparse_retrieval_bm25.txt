@@ -1,0 +1,23 @@
+# Sparse Retrieval and BM25
+
+BM25 is a lexical scoring function that ranks documents by term overlap with
+a query, extending simple TF-IDF with two corrections: it saturates the
+contribution of very frequent terms (so a document repeating a word fifty
+times isn't scored fifty times higher than one that says it once) and it
+normalizes for document length (so short documents aren't unfairly favored
+or penalized). The result is a ranking function that has stayed a strong
+baseline for decades despite the rise of neural retrieval.
+
+Because BM25 matches on tokens rather than meaning, it excels at exact-match
+queries: product codes, function names, quoted phrases, rare technical
+terms, or anything where the user's wording is likely to appear verbatim in
+the relevant document. It also requires no training, no GPU, and no vector
+index — just an inverted index over tokenized text — which makes it cheap
+to stand up and fast to query even over millions of documents.
+
+Its weakness is the mirror image of dense retrieval's strength: BM25 cannot
+find a relevant passage that uses different words for the same concept. A
+query for "how to cancel a subscription" will not match a document that only
+says "terminate your plan" unless both phrasings happen to share enough
+tokens. This complementary failure mode is exactly why hybrid retrieval
+systems fuse BM25 with embeddings rather than picking one.

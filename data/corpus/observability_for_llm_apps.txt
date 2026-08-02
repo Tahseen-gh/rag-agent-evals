@@ -1,0 +1,35 @@
+# Observability for LLM Applications
+
+Observability for an LLM-backed application needs everything a
+conventional service needs — request logging, correlation IDs, latency and
+error-rate metrics, distributed tracing — plus data specific to how these
+systems fail, because "the service returned 200 OK" says nothing about
+whether the answer inside that response was actually correct.
+
+Structured, per-request logs (one JSON line per request, including a
+request id that's threaded through every downstream call) make it possible
+to reconstruct exactly what happened for a specific bad interaction after
+the fact, rather than only observing an aggregate error rate. Tracing
+matters even more for multi-step systems: a RAG call has a retrieval step
+and a generation step, and an agent call may have several tool-call rounds
+— without tracing that captures each step's inputs, outputs, and latency
+individually, a slow or wrong final answer gives no signal about which
+stage caused it.
+
+Beyond generic service telemetry, LLM-specific observability should capture
+token usage and cost per request (since cost is a first-class operational
+concern, not an afterthought), the exact prompt and model version used
+(prompt behavior changes are effectively silent deploys if not versioned
+and logged), and, where feasible, a sample of full request/response pairs
+for offline review — both to catch quality regressions a metric alone might
+miss and to build the labeled examples needed to grow an eval set over
+time.
+
+The retrieval and generation quality metrics discussed elsewhere — recall,
+NDCG, faithfulness, citation accuracy — are typically computed offline
+against a fixed eval set in CI, not from live traffic in real time. Good
+observability is what connects the two: it's the mechanism for noticing
+that live traffic has started to look different from the eval set (new
+query patterns, a shift in corpus content) early enough to update the eval
+set before quality silently degrades in production without anyone
+measuring it.

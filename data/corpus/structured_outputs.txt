@@ -1,0 +1,29 @@
+# Structured Outputs and Schema-Constrained Generation
+
+Many applications need a model's output to be machine-parseable — a JSON
+object with specific fields, an enum value, a well-formed function call —
+rather than free-form prose. The reliability of this constraint has evolved
+through three approaches. The earliest and least reliable is prompting the
+model to "respond with JSON" and hoping it complies; models sometimes wrap
+the JSON in explanatory text, produce invalid JSON, or omit required fields
+under pressure from other instructions in the prompt.
+
+A more reliable approach validates the model's output against a schema
+after generation and retries or repairs on failure, which catches errors
+but wastes a generation attempt whenever the model fails and adds latency
+for the retry.
+
+The most reliable approach constrains generation itself: the API accepts a
+JSON schema and the model is only allowed to produce tokens that keep the
+output valid against that schema at every step, making malformed output
+structurally impossible rather than merely unlikely. This is what
+"structured outputs" or "tool use" parameters typically provide in modern
+model APIs — the same underlying mechanism that lets a model reliably emit
+a function call with correctly typed arguments is what lets it reliably
+emit an arbitrary JSON object matching a caller-supplied schema.
+
+Structured outputs matter for RAG and agent systems specifically because
+citations, tool arguments, and multi-field verdicts (like an LLM judge's
+score plus rationale) all need to be parsed programmatically; free-text
+output with ad hoc parsing is a common source of silent failures in
+production LLM pipelines.

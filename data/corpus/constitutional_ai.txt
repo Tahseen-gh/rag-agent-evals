@@ -1,0 +1,31 @@
+# Constitutional AI
+
+Constitutional AI is a training approach, introduced by Anthropic, for
+aligning a language model's behavior with a set of explicit principles (a
+"constitution") using AI-generated feedback rather than relying solely on
+large volumes of human-labeled preference data. It has two phases. In the
+supervised phase, the model is prompted to critique and revise its own
+responses against the constitution's principles, and is then fine-tuned on
+the revised, improved responses. In the reinforcement learning phase, the
+model itself (rather than a human) is used to compare pairs of responses
+according to the constitution and produce preference labels, which train a
+reward model that is then used to fine-tune the policy with reinforcement
+learning — a process the authors termed RLAIF (reinforcement learning from
+AI feedback) by analogy with RLHF.
+
+The motivation is that human preference labeling is expensive, slow to
+scale, and depends on the judgment and consistency of individual labelers,
+whereas a written constitution makes the principles a model is meant to
+follow explicit and auditable rather than implicit in a labeling
+population's aggregate judgment. It also lets the desired behavior be
+specified and iterated on directly — editing the constitution — rather than
+only indirectly, by collecting new labeled examples that hopefully steer the
+model in the intended direction.
+
+A practical benefit reported for this approach is that it produces models
+that are simultaneously more harmless and less evasive: models trained only
+to avoid harm via aggressive human-labeled refusal often learn to refuse
+overly broadly, including on benign requests that superficially resemble
+harmful ones, whereas models trained against explicit principles can be
+asked to explain their reasoning against those principles, which makes it
+possible to distinguish a well-reasoned refusal from an overcautious one.

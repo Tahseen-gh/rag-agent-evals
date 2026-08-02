@@ -7,7 +7,7 @@ from typing import Any
 
 import jwt
 import structlog
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.security import APIKeyHeader, HTTPAuthorizationCredentials, HTTPBearer
 from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
@@ -155,8 +155,11 @@ def health() -> dict[str, Any]:
     return {"ok": True, "version": APP_VERSION, "git_sha": GIT_SHA}
 
 
-@app.get("/api/v1/search")
-def search(q: str, backend: str = "bm25", k: int = 5) -> dict[str, Any]:
+@app.get(
+    "/api/v1/search",
+    responses={400: {"description": "Invalid backend"}},
+)
+def search(q: str, backend: str = "bm25", k: int = Query(default=5, ge=1, le=50)) -> dict[str, Any]:
     try:
         retr = get_backend(
             backend,
@@ -188,13 +191,13 @@ class ReadyResponse(BaseModel):
     git_sha: str
 
 
-# Small extra router: a protected ping + a POST sink for body-limit tests
+# Ops endpoints: readiness, a protected ping, and a POST sink for body-limit tests
 from fastapi import APIRouter  # noqa: E402
 
-_phase2 = APIRouter()
+ops_router = APIRouter()
 
 
-@_phase2.get(
+@ops_router.get(
     "/ready",
     response_model=ReadyResponse,
     responses={
@@ -212,7 +215,7 @@ def ready() -> ReadyResponse:
     return ReadyResponse(ready=_ready_probe(), version=APP_VERSION, git_sha=GIT_SHA)
 
 
-@_phase2.get(
+@ops_router.get(
     "/secure/ping",
     dependencies=[Depends(require_auth)],
     responses={
@@ -225,7 +228,7 @@ def secure_ping() -> dict[str, Any]:
     return {"ok": True, "secure": True}
 
 
-@_phase2.post(
+@ops_router.post(
     "/sink",
     responses={
         413: {"description": "Request Entity Too Large"},
@@ -236,9 +239,9 @@ def sink_endpoint(_: Any = None) -> dict[str, Any]:
     return {"ok": True}
 
 
-# Mount existing v1 routes + our small Phase 2 endpoints
+# Mount the v1 API router plus the small ops router (readiness, secure ping, sink)
 app.include_router(v1_router, prefix="/api/v1")
-app.include_router(_phase2, prefix="/api/v1")
+app.include_router(ops_router, prefix="/api/v1")
 
 
 # --- startup hook --------------------------------------------------------

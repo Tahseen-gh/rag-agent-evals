@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "openai-ml-phase1"
+name = "domain-rag-evals"
 version = "0.1.0"
 requires-python = ">=3.11"
 
@@ -44,7 +44,7 @@ ignore_errors = true
 
 [tool.pytest.ini_options]
 addopts = "--quiet --cov=fastapi_app --cov=rag --cov=ml --cov-report=term-missing --cov-report=xml --cov-fail-under=80"
-testpaths = ["fastapi_app/tests", "rag/tests", "ml/tests"]
+testpaths = ["fastapi_app/tests", "rag/tests", "ml/tests", "tests"]
 pythonpath = ["."]
 
 [tool.coverage.run]
@@ -52,11 +52,4 @@ omit = [
     "*/tests/*",
     "fastapi_app/app/telemetry.py",
     "fastapi_app/app/main.py",
-    "rag/eval_metrics.py",
-    "rag/ingestion.py",
-    "rag/index.py",
-    "rag/retrieve.py",
-    "rag/retriever.py",
-    "rag/backends/*",
-    "ml/train_loop.py",
 ]

@@ -3,8 +3,12 @@ on:
   push:
   pull_request:
 jobs:
-  eval-lite:
+  # Retrieval-quality evals (recall/MRR/NDCG on the real corpus, gated on bm25)
+  # already run in retrieval-evals.yml - no separate "lite" version here.
+
+  generation-eval:
     runs-on: ubuntu-latest
+    if: ${{ secrets.ANTHROPIC_API_KEY != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -13,28 +17,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
-      - name: Run lite retrieval eval
-        run: python rag/eval_metrics.py
+      - name: Real LLM-judged generation eval (conditional on a key being configured)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python -m evals.run --backend hybrid --real-llm --llm-judge
       - name: Upload eval report
         uses: actions/upload-artifact@v4
-        with: { name: eval-lite-report, path: rag/eval/report.json }
-
-  ragas:
-    runs-on: ubuntu-latest
-    if: ${{ secrets.OPENAI_API_KEY != '' || secrets.ANTHROPIC_API_KEY != '' }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.12" }
-      - name: Install
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
-      - name: RAGAS eval (conditional)
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: python rag/eval_ragas.py
+        with: { name: generation-eval-report, path: evals/results_summary.json }
 
   sbom:
     runs-on: ubuntu-latest

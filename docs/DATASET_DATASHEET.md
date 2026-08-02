@@ -1,4 +1,4 @@
-﻿# Datasheet for Datasets — openai-ml-phase1
+﻿# Datasheet for Datasets — domain-rag-evals
 
 ## Motivation
 Describe what questions your corpus should help answer.

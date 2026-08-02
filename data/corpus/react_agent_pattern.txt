@@ -1,0 +1,31 @@
+# The ReAct Pattern
+
+ReAct (reasoning and acting) is an agent prompting pattern that interleaves
+explicit reasoning steps with tool calls: the model writes out a short
+thought about what it needs to do next, takes an action (a tool call) based
+on that thought, observes the result, and writes another thought before
+deciding the next action or producing a final answer. The name is a
+portmanteau of "reason" and "act."
+
+The motivation is that reasoning and acting are more effective together
+than either alone. Pure reasoning without acting can't retrieve new
+information the model doesn't already have, so it hallucinates facts under
+pressure to keep reasoning. Pure acting without interleaved reasoning tends
+to chase tool calls reactively without a coherent plan, repeating similar
+searches or missing that an earlier result already answered the question.
+Interleaving lets the model's reasoning be grounded in real observations
+from the tools it has already used, and lets its tool use be guided by an
+explicit, inspectable plan rather than an implicit one.
+
+A practical benefit of ReAct beyond raw task performance is interpretability
+during debugging: because the intermediate thoughts are visible, a
+developer looking at a failed agent trajectory can usually tell whether the
+failure was a reasoning error (the plan was wrong) or an execution error
+(the plan was right but a tool call had bad arguments or a tool returned
+unexpected results), which point to very different fixes.
+
+Modern tool-use APIs largely replaced hand-written ReAct-style prompts with
+native tool-call support, but the underlying pattern — interleave reasoning
+with grounded observations rather than reasoning open-loop — is still the
+conceptual model most production agent loops follow, whether or not the
+word "Thought:" literally appears in the transcript.

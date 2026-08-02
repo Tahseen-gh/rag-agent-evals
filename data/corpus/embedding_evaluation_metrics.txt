@@ -1,0 +1,32 @@
+# Retrieval Evaluation Metrics
+
+Retrieval quality is usually measured against a set of queries with known
+relevant documents, using rank-aware metrics rather than plain accuracy,
+because where a relevant document lands in the ranking matters as much as
+whether it appears at all.
+
+Recall@k asks a simple question: for what fraction of queries does at least
+one relevant document appear in the top k results? It's easy to interpret
+and is the right metric when a downstream system (like a RAG generator) only
+looks at the top k passages anyway — recall@k directly measures whether the
+generator will even see the answer.
+
+Mean reciprocal rank (MRR) scores each query by 1/rank of the first relevant
+result (0 if none appear), then averages across queries. MRR rewards
+putting the relevant document earlier, not just somewhere in the top k,
+which recall@k ignores.
+
+Normalized discounted cumulative gain (NDCG) generalizes further: it
+accounts for multiple relevant documents per query and lets relevance be
+graded rather than binary, discounting a document's contribution
+logarithmically by its rank position, then normalizing by the score of the
+ideal ranking so the metric is comparable across queries with different
+numbers of relevant documents.
+
+In practice, recall@k is the metric most directly tied to end-to-end RAG
+quality, MRR is useful when a single best answer matters, and NDCG is
+preferred when relevance is graded rather than binary. Reporting all three
+against a fixed, versioned query set — and gating changes in CI when a
+metric regresses beyond a tolerance — is standard practice for keeping a
+retrieval system from silently degrading as the corpus, chunking, or model
+changes.

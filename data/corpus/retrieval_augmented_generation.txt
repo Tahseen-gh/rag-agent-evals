@@ -1,0 +1,24 @@
+# Retrieval-Augmented Generation
+
+Retrieval-augmented generation (RAG) pairs a language model with an external
+knowledge store so the model can ground its answers in retrieved evidence
+instead of relying only on parameters learned at training time. A typical
+pipeline has three stages: index a corpus of documents (chunk, embed, and
+store them), retrieve the passages most relevant to a user's query, and
+generate an answer conditioned on those passages plus the query.
+
+RAG exists because parametric knowledge in a language model is frozen at
+training time, expensive to update, and prone to hallucination on facts the
+model never saw enough of. By injecting fresh, verifiable text into the
+prompt at inference time, RAG lets a system answer questions about private
+documents, recent events, or long-tail facts without retraining. It also
+gives a system provenance: an answer can point back to the specific passage
+it was derived from, which matters for trust and for auditing mistakes.
+
+The quality of a RAG system is bounded by both halves of the pipeline. A
+perfect retriever feeding a weak generator still produces answers that
+misread the evidence; a strong generator fed irrelevant passages will either
+hallucinate or refuse. This is why RAG systems are usually evaluated with
+two separate metrics: retrieval quality (did we find the right passages) and
+generation quality (did the model use them correctly). Improving one without
+measuring the other is a common failure mode in early RAG projects.

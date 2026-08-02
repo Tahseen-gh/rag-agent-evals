@@ -1,0 +1,33 @@
+# Mitigating Hallucination
+
+A hallucination is a model output that states something false with the same
+fluent confidence as a true statement — a fabricated citation, an invented
+API parameter, a wrong date presented as fact. Hallucination is a
+consequence of how language models generate text: they are trained to
+produce plausible continuations, not to distinguish between what they
+actually know with confidence and what merely sounds right, and nothing in
+standard training explicitly penalizes confident wrongness differently from
+uncertain wrongness.
+
+Retrieval-augmented generation is one of the most effective practical
+mitigations, because it gives the model something to be right about: when
+the answer is present in retrieved context, a well-prompted model is
+substantially more likely to reproduce it faithfully than to invent an
+answer from parametric memory, particularly when the prompt explicitly
+instructs the model to answer only from the provided context and to say so
+when the context doesn't contain the answer. RAG does not eliminate
+hallucination — a model can still misread or misattribute retrieved
+context, or fabricate a plausible-sounding synthesis of two unrelated
+passages — but it substantially narrows the gap between what the model
+claims and what it can point to.
+
+Other complementary mitigations include instructing the model to cite
+specific sources for claims (which both discourages ungrounded assertions
+and makes them checkable when they occur), decomposing complex answers into
+individually verifiable claims and checking each one against context (the
+same idea RAGAS-style faithfulness scoring formalizes), and calibrating the
+model to express uncertainty or decline to answer when retrieved evidence
+is insufficient rather than filling the gap with a confident guess. None of
+these fully solve hallucination on their own, which is why production
+systems that care about factual reliability typically layer several of
+them together rather than relying on any single technique.

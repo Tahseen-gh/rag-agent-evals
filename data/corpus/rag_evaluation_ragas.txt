@@ -1,0 +1,32 @@
+# Evaluating RAG Answers with RAGAS-Style Metrics
+
+Retrieval metrics like recall and NDCG tell you whether the right passages
+were found, but not whether the generated answer actually used them
+correctly. RAG-specific evaluation frameworks such as RAGAS decompose
+answer quality into several distinct, separately measurable dimensions
+rather than one opaque "is this good" score.
+
+Faithfulness measures whether every claim in the generated answer is
+actually supported by the retrieved context, typically by decomposing the
+answer into individual statements and checking each one against the
+context — this is the metric that catches hallucination even when the
+answer sounds fluent and plausible.
+
+Answer relevance measures whether the generated answer actually addresses
+the question asked, independent of faithfulness; a fully faithful answer
+that talks around the question rather than answering it should still score
+poorly here.
+
+Context precision and context recall evaluate the retrieval step within the
+same framework: precision asks whether the retrieved passages that were
+actually used are relevant (penalizing noisy context), recall asks whether
+all the information needed to answer the question was present somewhere in
+the retrieved context at all.
+
+Because faithfulness and relevance require judging natural language rather
+than comparing to a single fixed string, they are usually scored by another
+LLM acting as a judge rather than by exact string match. This makes the
+metric more flexible but also introduces judge variance, which is why
+production RAG evals often pair an LLM-judge score with cheaper, more
+deterministic checks (keyword or citation-presence checks) as a sanity
+baseline.

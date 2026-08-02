@@ -1,1 +1,0 @@
-﻿RAG makes it easier to answer questions by retrieving relevant chunks from documents.

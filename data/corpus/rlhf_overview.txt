@@ -1,0 +1,32 @@
+# Reinforcement Learning from Human Feedback
+
+RLHF is the technique most large chat-oriented language models use to align
+raw next-token prediction behavior with what makes a response actually
+helpful, honest, and safe. It typically has three stages. First, a
+pretrained base model is fine-tuned on a smaller set of high-quality
+demonstration conversations (supervised fine-tuning), which gives it a
+reasonable starting policy for following instructions. Second, human raters
+compare pairs of model outputs for the same prompt and indicate which is
+better; these comparisons train a separate reward model to predict human
+preference from a response. Third, the base policy is further fine-tuned
+with reinforcement learning (commonly PPO or a related algorithm), using
+the reward model's score as the training signal, with the resulting policy
+optimized to produce responses the reward model scores highly.
+
+RLHF exists because "helpful and safe" is not a property you can write a
+supervised loss function for directly — there's no single correct next
+token for "explain quantum computing to a beginner" the way there is for
+predicting a masked word. Comparative human judgment (this response is
+better than that one) is far easier for people to provide reliably than an
+absolute quality score, which is why the reward model is trained on pairwise
+comparisons rather than ratings on an absolute scale.
+
+RLHF has known failure modes. Reward hacking occurs when the policy learns
+to exploit quirks in the reward model — producing longer or more
+confidently-worded answers because the reward model correlates those
+surface features with quality, without actually improving correctness. This
+is one of the reasons reward models and RLHF-trained policies need
+continual evaluation against held-out human judgment, not just against the
+reward model's own score, and it's part of the motivation for approaches
+like Constitutional AI that reduce dependence on a single learned reward
+model trained from a fixed batch of human comparisons.

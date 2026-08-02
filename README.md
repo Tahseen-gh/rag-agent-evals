@@ -1,10 +1,21 @@
-# Domain RAG & Evals Phase 1 Scaffold
+# Domain RAG & Evals
 
-This repo boots a production-leaning LLM/RAG project with:
-- **FastAPI** service (`/api/v1/health` endpoint)
-- Project layout: `fastapi_app/`, `rag/`, `evals/`, `infra/`
-- Tooling: Docker, docker-compose, Makefile, pre-commit (black/ruff), GitHub Actions CI
-- Tests: pytest (healthcheck)
+A production-leaning RAG + agent system with real retrieval, real
+generation (Anthropic Claude), a tool-calling agent, a learned reranker, and
+evals with real numbers - see [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md) for
+everything computed end to end, with reproduction commands.
+
+- **FastAPI** service: retrieval (`bm25`/`embed`/`hybrid`/`learned`
+  backends), cited RAG answers, a tool-calling agent, health/readiness
+- Project layout: `fastapi_app/` (API), `rag/` (retrieval, generation,
+  agent), `evals/` (datasets & scoring), `ml/` (learned reranker)
+- Tooling: Docker, docker-compose, Makefile, pre-commit (black/ruff/bandit/mypy), GitHub Actions CI
+- Tests: pytest, 50+ tests, coverage-gated in CI
+
+Every generation and agent code path is real (uses the `anthropic` SDK when
+`ANTHROPIC_API_KEY` is set), but defaults to a deterministic, dependency-free
+fallback (`USE_DUMMY_LLM=true`) so tests and CI never require a network call
+or an API key.
 
 ## Quickstart
 ```bash
@@ -18,14 +29,12 @@ make up             # docker compose up (prod-like)
 
 ## Structure
 ```
-fastapi_app/      # API app (FastAPI)
-rag/              # (Phase 2+) ingestion, indexing, retrieval
-evals/            # (Phase 3+) eval datasets & runners
+fastapi_app/      # API app (FastAPI): search, rag/answer, agent/ask, health/ready
+rag/              # retrieval backends, ingestion, chunking, generation, agent, llm client
+evals/            # eval datasets & runners (retrieval metrics + generation scoring)
 infra/            # docker-compose and ops bits
-ml/               # minimal training loop examples & tests
+ml/               # learned reranker: training, evaluation, persisted weights
 ```
-
-> Next Phases will fill out `rag/` (hybrid retrieval), `evals/` (OpenAI Evals), and safety+observability.
 
 
 ### Health
@@ -66,20 +75,18 @@ pre-commit run --all-files
 
 ## Retrieval backends
 
-Query the demo corpus via `/api/v1/search?q=...&backend=bm25|embed|hybrid&k=5`.
-The hybrid backend combines normalized BM25 and embedding scores:
+Query the real 24-document corpus (`data/corpus/`) via
+`/api/v1/search?q=...&backend=bm25|embed|hybrid|learned&k=5`.
 
-```
-score = (1 - α) * bm25_norm + α * embed_norm
-```
+- `bm25` - lexical (rank_bm25)
+- `embed` - dense (sentence-transformers, or a deterministic hash-based
+  dummy model when `USE_DUMMY_EMBEDDINGS=true`)
+- `hybrid` - min-max-normalized score fusion, `score = (1 - alpha) * bm25_norm + alpha * embed_norm`
+- `learned` - the same fusion, but with weights learned by logistic
+  regression (`ml/reranker.py`) instead of a hand-picked `alpha`
 
-Example (toy numbers):
-
-| backend | doc | score |
-|---------|-----|-------|
-| bm25    | doc1 | 0.82 |
-| embed   | doc2 | 0.87 |
-| hybrid  | doc2 | 0.90 |
+Real numbers for all four, and why `learned` outperforms fixed-alpha fusion,
+are in [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md#1-retrieval-backend-comparison).
 
 Environment knobs:
 
@@ -87,30 +94,67 @@ Environment knobs:
 - `HYBRID_ALPHA` (weight for embeddings, default `0.5`)
 - `USE_DUMMY_EMBEDDINGS` (set `true` to avoid network calls in tests)
 
-## Evaluation & CI gates
+## RAG generation & agent
 
-Retrieval quality is measured on a versioned corpus with Recall@1/3/5/10, MRR, and NDCG@10.
-The `Retrieval evals (quality gates)` workflow runs deterministic evaluations for
-`bm25`, `embed`, and `hybrid` backends and fails if any of `recall@3`, `MRR`, or
-`NDCG@10` drop by more than `ALLOWED_REGRESSION_DELTA` (default `0.01`) relative to
-`evals/baseline.json`.
-
-Example baseline metrics:
-
-| backend | recall@3 | MRR | NDCG@10 |
-|---------|----------|-----|---------|
-| bm25    | 1.000    | 1.000 | 1.000 |
-| embed   | 1.000    | 1.000 | 1.000 |
-| hybrid  | 1.000    | 1.000 | 1.000 |
-
-To intentionally update the baseline:
+`POST /api/v1/rag/answer` — retrieve, select the most relevant chunk from
+each result, and generate a cited answer:
 
 ```bash
-python scripts/eval_retrieval.py --backend hybrid --seed 1337
-python scripts/update_baseline.py --from evals/reports/hybrid-<git_sha>.json
+curl -X POST localhost:8000/api/v1/rag/answer \
+  -H 'content-type: application/json' \
+  -d '{"question": "What corrections does BM25 add to term frequency?", "backend": "bm25", "k": 4}'
 ```
 
-The dataset is pinned via `data/manifest.json`; hashes are checked in tests for determinism.
+`POST /api/v1/agent/ask` — a tool-calling agent loop: the model decides
+whether to call a `search_corpus` tool (possibly more than once) before
+answering, capped at `AGENT_MAX_TURNS` turns:
+
+```bash
+curl -X POST localhost:8000/api/v1/agent/ask \
+  -H 'content-type: application/json' \
+  -d '{"question": "What is BM25?", "backend": "bm25"}'
+```
+
+Both endpoints use a real `anthropic` SDK client when `ANTHROPIC_API_KEY` is
+set and `USE_DUMMY_LLM=false`; otherwise they fall back to a deterministic,
+dependency-free client (an extractive answerer for `/rag/answer`, a scripted
+one-tool-call responder for `/agent/ask`) so the full pipeline is testable
+without a key. See [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md#4-end-to-end-generation-eval)
+for real end-to-end numbers.
+
+Environment knobs:
+
+- `ANTHROPIC_API_KEY` (unset by default → dummy mode)
+- `LLM_MODEL` (default `claude-sonnet-5`)
+- `USE_DUMMY_LLM` (default `true`)
+- `AGENT_MAX_TURNS` (default `6`)
+- `RAG_TOP_K` (default `4`)
+
+## Evaluation & CI gates
+
+Retrieval quality is measured on the real corpus with Recall@1/3/5/10, MRR, and NDCG@10.
+The `Retrieval evals (quality gates)` workflow runs `bm25`, `embed`, and `hybrid`
+and **hard-gates only on `bm25`** against `evals/baseline.json` (fails if `recall@3`,
+`MRR`, or `NDCG@10` drop by more than `ALLOWED_REGRESSION_DELTA`, default `0.01`).
+`embed`/`hybrid` are reported but not gated, since they depend on downloading a
+model from Hugging Face — a network dependency a hard CI gate shouldn't be able to
+flake on; `bm25` needs nothing beyond what's already installed. Real current
+metrics for every backend are in
+[docs/EXPERIMENTS.md](docs/EXPERIMENTS.md#1-retrieval-backend-comparison).
+
+Generation quality is scored separately: `python -m evals.run --backend hybrid`
+runs the real RAG pipeline against `evals/dataset/qas.jsonl` and grades each
+answer with a deterministic heuristic judge (keyword coverage + citation
+correctness), or a real LLM-judge with `--llm-judge` and `ANTHROPIC_API_KEY` set.
+
+To intentionally update the retrieval baseline:
+
+```bash
+python scripts/eval_retrieval.py --backend bm25 --seed 1337
+python scripts/update_baseline.py --from evals/reports/bm25-<git_sha>.json
+```
+
+The corpus is pinned via `data/manifest.json`; hashes are checked in tests for determinism.
 
 ## Security
 
@@ -127,7 +171,7 @@ in the PR. Avoid blanket suppressions.
 **Local checks**:
 ```bash
 pre-commit run --all-files
-bandit -r fastapi_app -x tests,__pycache__ --severity-level medium --confidence-level medium
+bandit -r fastapi_app rag ml evals scripts -x tests,__pycache__ --severity-level medium --confidence-level medium
 pip-audit -r requirements.txt
 ```
 

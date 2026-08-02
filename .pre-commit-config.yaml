@@ -41,6 +41,10 @@ repos:
           - -q
           - -r
           - fastapi_app
+          - rag
+          - ml
+          - evals
+          - scripts
           - -x
           - tests,__pycache__,.venv,build,dist
           - --severity-level

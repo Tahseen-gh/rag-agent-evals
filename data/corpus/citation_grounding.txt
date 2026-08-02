@@ -1,0 +1,30 @@
+# Citation and Answer Grounding
+
+Citation grounding is the practice of having a RAG system attribute each
+claim in its generated answer to the specific source passage it came from,
+typically by having the model emit inline markers (like [1] or a document
+id) alongside its answer that map back to the retrieved passages it was
+given. This serves two purposes at once: it gives the end user a way to
+verify a claim against the original source rather than trusting the model's
+assertion outright, and it gives the system itself an implicit check —
+requiring a citation for every claim discourages (though does not
+guarantee against) statements that aren't actually supported by anything in
+the retrieved context.
+
+A citation is only as trustworthy as the mechanism that produces it.
+Prompting a model to "cite your sources" without further verification is
+weak: a model can hallucinate a plausible-looking citation to a real
+document that doesn't actually contain the claim it's attached to. Stronger
+implementations verify citations programmatically after generation — check
+that the cited passage actually contains language supporting the claim
+(via substring match, an entailment model, or an LLM-judge faithfulness
+check) — and either flag or strip citations that don't hold up rather than
+trusting the model's attribution at face value.
+
+Citation grounding interacts directly with chunking and retrieval design:
+if chunks are too large, a citation to "document 7" doesn't tell the reader
+which of several claims in that document supports the answer, weakening the
+citation's practical value even when it's technically correct. This is one
+of several reasons retrieval and generation should be evaluated as a single
+system rather than in isolation — a citation scheme that looks fine against
+retrieval metrics alone can still fail to be useful to an actual reader.

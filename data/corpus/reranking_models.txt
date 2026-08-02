@@ -1,0 +1,27 @@
+# Rerankers
+
+A reranker is a second-stage model that re-scores a small candidate set
+returned by a fast first-stage retriever, trading extra compute per query
+for higher precision at the top of the ranking. The two-stage pattern
+exists because the models that are accurate enough to score a query against
+every document individually (cross-encoders, or learned combiners of
+retrieval features) are too slow to run over an entire corpus, while the
+models fast enough to search millions of documents (BM25, dense bi-encoders)
+are less accurate at fine-grained ranking.
+
+A cross-encoder reranker takes the query and a candidate passage together as
+a single input and outputs a relevance score, which lets it model
+interactions between query and passage terms that a bi-encoder (which
+embeds each independently) cannot capture. This makes cross-encoders
+meaningfully more accurate at ranking a short list, at the cost of one
+forward pass per candidate rather than one embedding lookup for the whole
+corpus.
+
+A lighter-weight alternative, useful when a full cross-encoder isn't
+practical, is a learned linear or logistic-regression reranker over
+retrieval-time features: the BM25 score, the embedding cosine similarity,
+maybe positional or metadata features. This doesn't model query-passage
+interactions as richly as a cross-encoder, but it is nearly free at
+inference time and only requires a small labeled dataset of query-document
+relevance pairs to train, which makes it a practical first step before
+investing in a full cross-encoder.

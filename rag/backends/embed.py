@@ -31,10 +31,10 @@ class DummyEmbeddingModel:
         return _normalize(arr)
 
 
+faiss: Any = None
 try:  # pragma: no cover - exercised in tests
     import faiss
 except Exception:  # pragma: no cover - module may be absent
-    faiss = None
     logger.warning("faiss not available; using numpy cosine search")
 
 
