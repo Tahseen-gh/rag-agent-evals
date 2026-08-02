@@ -37,7 +37,7 @@ jobs:
         run: |
           ruff check .
           black --check .
-          mypy fastapi_app rag ml
+          mypy fastapi_app rag ml ui
       - name: Tests (coverage gate via pytest.ini)
         run: pytest
       - name: Generate coverage.xml

@@ -90,6 +90,14 @@ def _keep_suffix(
     return (out, tally)
 
 
+def _true_len(buf: list[tuple[int, int]]) -> int:
+    """Length of the contiguous source-text span the buffered sentence spans
+    cover, start of the first to end of the last - buf is always an ordered,
+    contiguous run of spans, so this is exact (unlike summing span lengths,
+    which silently drops the inter-sentence whitespace between them)."""
+    return buf[-1][1] - buf[0][0] if buf else 0
+
+
 def chunk_text(doc_id: str, text: str, *, max_chars: int = 800, overlap: int = 120) -> list[Chunk]:
     if max_chars <= 0:
         raise ValueError("max_chars must be > 0")
@@ -110,15 +118,17 @@ def chunk_text(doc_id: str, text: str, *, max_chars: int = 800, overlap: int = 1
         nonlocal buf, buf_chars
         if not buf:
             return
-        # Build body from the spans only (no separators) so len(body) == buf_chars
-        body = "".join(text[s:e] for s, e in buf).strip()
+        # Slice the original text directly (not a per-span join) so the real
+        # inter-sentence whitespace is preserved instead of silently dropped.
+        s0, e_n = buf[0][0], buf[-1][1]
+        body = text[s0:e_n].strip()
         if not body:
             buf, buf_chars = [], 0
             return
-        s0, e_n = buf[0][0], buf[-1][1]
         heading = _heading_for_chunk(sections, s0, e_n)
         chunks.append(Chunk(doc_id=doc_id, text=body, start=s0, end=e_n, heading=heading))
-        buf, buf_chars = _keep_suffix(buf, eff_overlap)
+        buf, _ = _keep_suffix(buf, eff_overlap)
+        buf_chars = _true_len(buf)
 
     for s, e in spans:
         span_len = e - s
@@ -141,21 +151,22 @@ def chunk_text(doc_id: str, text: str, *, max_chars: int = 800, overlap: int = 1
 
         if not buf:
             buf.append((s, e))
-            buf_chars = span_len
+            buf_chars = _true_len(buf)
             continue
 
-        if buf_chars + span_len <= max_chars:
+        prospective_len = e - buf[0][0]
+        if prospective_len <= max_chars:
             buf.append((s, e))
-            buf_chars += span_len
+            buf_chars = prospective_len
         else:
             flush()
             keep = max_chars - span_len
             if keep < 0:
                 keep = 0
             if buf_chars > keep:
-                buf, buf_chars = _keep_suffix(buf, keep)
+                buf, _ = _keep_suffix(buf, keep)
             buf.append((s, e))
-            buf_chars += span_len
+            buf_chars = _true_len(buf)
 
     flush()
     return chunks

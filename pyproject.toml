@@ -43,8 +43,8 @@ module = ["fastapi_app.tests.*", "rag.tests.*", "ml.tests.*"]
 ignore_errors = true
 
 [tool.pytest.ini_options]
-addopts = "--quiet --cov=fastapi_app --cov=rag --cov=ml --cov-report=term-missing --cov-report=xml --cov-fail-under=80"
-testpaths = ["fastapi_app/tests", "rag/tests", "ml/tests", "tests"]
+addopts = "--quiet --cov=fastapi_app --cov=rag --cov=ml --cov=ui --cov-report=term-missing --cov-report=xml --cov-fail-under=80"
+testpaths = ["fastapi_app/tests", "rag/tests", "ml/tests", "ui/tests", "tests"]
 pythonpath = ["."]
 
 [tool.coverage.run]
@@ -52,4 +52,5 @@ omit = [
     "*/tests/*",
     "fastapi_app/app/telemetry.py",
     "fastapi_app/app/main.py",
+    "ui/app.py",
 ]

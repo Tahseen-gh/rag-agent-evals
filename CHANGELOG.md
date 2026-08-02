@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `ui/`: a Streamlit UI (`ui/app.py` + `ui/logic.py`) with a chat page (search/RAG/agent modes with citations), a four-backend retrieval comparison view, and a live evals dashboard computed on demand rather than hardcoded. Defaults to the dummy LLM for safe public hosting; visitors can paste their own Anthropic key in the sidebar to enable real generation for their session.
 - Real 24-document corpus and 49 queries with correct relevance judgments, replacing the synthetic placeholder corpus.
 - `rag/generation.py` + `POST /api/v1/rag/answer`: retrieve, select the relevant chunk, generate a cited answer via the Anthropic API (or a deterministic dummy fallback).
 - `rag/agent.py` + `POST /api/v1/agent/ask`: a turn-limited tool-calling agent over a `search_corpus` tool.
@@ -19,10 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `retrieval-evals.yml` CI now hard-gates only on the network-free `bm25` backend; `embed`/`hybrid` are reported but not gated, since they depend on a Hugging Face model download.
 - `pyproject.toml` `testpaths` now includes the top-level `tests/` directory, which was previously silently excluded from CI.
 - `evals-sbom.yml`'s `eval-lite` job (called the now-deleted `rag/eval_metrics.py`) replaced with a `generation-eval` job that runs the real, LLM-judged `evals.run` when `ANTHROPIC_API_KEY` is configured.
-- `bandit` (pre-commit and CI) now scans `rag/`, `ml/`, `evals/`, `scripts/` in addition to `fastapi_app/` - previously the bulk of the application logic wasn't covered by the security scan at all.
+- `bandit` (pre-commit and CI) now scans `rag/`, `ml/`, `evals/`, `scripts/`, `ui/` in addition to `fastapi_app/` - previously the bulk of the application logic wasn't covered by the security scan at all.
+- `mypy` (pre-commit and CI) now also checks `ui/`.
+- `scripts/eval_retrieval.py`: extracted a pure `compute_metrics()` (no file writes, no git subprocess) from `evaluate()`, so the evals UI page reuses the exact same scoring code as the CLI/CI instead of duplicating it.
 - Removed unused, orphaned, or empty files left over from earlier project iterations: `rag/eval/` (fixture data for the deleted `eval_metrics.py`), `rag/fixtures.json`, `rag/configs/settings.yaml`, `rag/eval_ragas.py`, `scripts/apply-python-fixes.ps1` (all empty or unreferenced), and a stale `requirements-lock.txt` that had drifted from `requirements.txt` and was never installed from anywhere.
 
 ### Fixed
+- `rag/chunking.py`: `chunk_text()` joined sentence spans without their separating whitespace, silently gluing chunk-internal sentence boundaries together (e.g. "sentence.It" instead of "sentence. It"). Found via manual UI testing, not by any prior automated test; added a regression test.
 - `data/manifest.json` and `evals/baseline.json` didn't exist despite CI depending on them; the retrieval-evals workflow was broken.
 - `docker-compose.yml` had invalid YAML (a healthcheck block mashed onto one line).
 - A `mypy` type error in `rag/backends/embed.py`.

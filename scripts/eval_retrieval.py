@@ -53,7 +53,13 @@ def load_queries(path: Path) -> list[dict[str, object]]:
     return queries
 
 
-def evaluate(backend_name: str, k: int, seed: int, manifest_path: Path) -> dict[str, object]:
+def compute_metrics(backend_name: str, k: int, seed: int, manifest_path: Path) -> dict[str, float]:
+    """Pure metric computation: no report wrapping, no file writes, no git.
+
+    Shared by the CLI (evaluate(), below) and the Streamlit UI's evals page -
+    the UI needs to compute live numbers on page load without leaving files
+    behind on every visitor's request.
+    """
     set_deterministic(seed)
     texts, ids = load_corpus(manifest_path)
     backend = get_backend(
@@ -98,6 +104,15 @@ def evaluate(backend_name: str, k: int, seed: int, manifest_path: Path) -> dict[
     metrics["MRR"] = mrr_total / n
     metrics["NDCG@10"] = ndcg_total / n
 
+    from rag import retriever as retriever_mod
+
+    retriever_mod._BACKENDS.pop(backend_name, None)
+    return metrics
+
+
+def evaluate(backend_name: str, k: int, seed: int, manifest_path: Path) -> dict[str, object]:
+    metrics = compute_metrics(backend_name, k, seed, manifest_path)
+    n = len(load_queries(manifest_path.parent / "queries.jsonl"))
     git_sha = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode().strip()
     manifest = json.loads(manifest_path.read_text())
     report = {
@@ -114,9 +129,6 @@ def evaluate(backend_name: str, k: int, seed: int, manifest_path: Path) -> dict[
     out_path = reports_dir / f"{backend_name}-{git_sha}.json"
     out_path.write_text(json.dumps(report, indent=2))
     Path("evals/latest.json").write_text(json.dumps(report, indent=2))
-    from rag import retriever as retriever_mod
-
-    retriever_mod._BACKENDS.pop(backend_name, None)
     return report
 
 
