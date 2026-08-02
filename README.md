@@ -64,7 +64,6 @@ pytest -q
 pre-commit run --all-files
 ```
 
-codex/set-up-ci-workflow-with-coverage-gate-2fsau3
 ## Retrieval backends
 
 Query the demo corpus via `/api/v1/search?q=...&backend=bm25|embed|hybrid&k=5`.
@@ -112,7 +111,7 @@ python scripts/update_baseline.py --from evals/reports/hybrid-<git_sha>.json
 ```
 
 The dataset is pinned via `data/manifest.json`; hashes are checked in tests for determinism.
-=======
+
 ## Security
 
 - **Bandit** runs in **pre-commit** and in CI (job **security / bandit**). The CI job is **blocking** for
@@ -141,4 +140,3 @@ pip-audit -r requirements.txt
 ```json
 {"ts":"2024-01-01T00:00:00Z","level":"info","logger":"access","request_id":"...","method":"GET","path":"/api/v1/ready","status":200,"duration_ms":1.2,"client_ip":"127.0.0.1","user_agent":"curl"}
 ```
-main
