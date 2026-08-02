@@ -10,5 +10,5 @@
 
 ## Mitigations implemented
 - Pre-commit: ruff, mypy (type errors), trailing whitespace/EOF fixers, detect-secrets.
-- CI: tests + coverage ≥80%, eval-lite, SBOM artifact.
+- CI: tests + coverage ≥80%, retrieval evals gated on regression, SBOM artifact.
 - Service: health check; optional OTEL traces; no write-side endpoints by default.

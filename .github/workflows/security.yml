@@ -35,12 +35,12 @@ jobs:
           python -m pip install bandit
       - name: Bandit (blocking: MEDIUM/HIGH sev & conf)
         run: |
-          bandit -r fastapi_app \
+          bandit -r fastapi_app rag ml evals scripts \
                  -x tests,__pycache__,.venv,build,dist \
                  --severity-level medium --confidence-level medium \
                  -f json -o bandit.json
           # Also print a concise human summary to logs
-          bandit -r fastapi_app \
+          bandit -r fastapi_app rag ml evals scripts \
                  -x tests,__pycache__,.venv,build,dist \
                  --severity-level medium --confidence-level medium
       - name: Upload Bandit report

@@ -15,6 +15,9 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY fastapi_app ./fastapi_app
+COPY rag ./rag
+COPY ml ./ml
+COPY data ./data
 COPY .env.example ./.env
 
 EXPOSE 8000

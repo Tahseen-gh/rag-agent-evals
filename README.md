@@ -171,7 +171,7 @@ in the PR. Avoid blanket suppressions.
 **Local checks**:
 ```bash
 pre-commit run --all-files
-bandit -r fastapi_app -x tests,__pycache__ --severity-level medium --confidence-level medium
+bandit -r fastapi_app rag ml evals scripts -x tests,__pycache__ --severity-level medium --confidence-level medium
 pip-audit -r requirements.txt
 ```
 
