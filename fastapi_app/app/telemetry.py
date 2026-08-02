@@ -19,7 +19,7 @@ def init_otel() -> bool:
         from opentelemetry.sdk.trace import TracerProvider
         from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
-        resource = Resource.create({"service.name": "openai-ml-phase1"})
+        resource = Resource.create({"service.name": "domain-rag-evals"})
         provider = TracerProvider(resource=resource)
         trace.set_tracer_provider(provider)
         provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint)))

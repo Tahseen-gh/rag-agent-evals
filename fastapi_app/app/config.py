@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 
     # App
-    app_name: str = "phase1-api"
+    app_name: str = "domain-rag-evals-api"
     debug: bool = False
 
     # Auth

@@ -24,7 +24,7 @@ precommit:
 	pre-commit install
 
 docker-build:
-	docker build -t rag-evals-api:latest .
+	docker build -t domain-rag-evals:latest .
 
 up:
 	docker compose up -d --build
