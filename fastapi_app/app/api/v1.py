@@ -1,7 +1,7 @@
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from fastapi_app.app.config import settings
 from rag.agent import get_agent_llm_client, run_agent
@@ -18,7 +18,7 @@ def health() -> dict[str, Any]:
 class RagAnswerRequest(BaseModel):
     question: str
     backend: str = "hybrid"
-    k: int = 4
+    k: int = Field(default=4, ge=1, le=50)
 
 
 class CitationOut(BaseModel):
@@ -34,7 +34,11 @@ class RagAnswerResponse(BaseModel):
     citations: list[CitationOut]
 
 
-@router.post("/rag/answer", response_model=RagAnswerResponse)
+@router.post(
+    "/rag/answer",
+    response_model=RagAnswerResponse,
+    responses={400: {"description": "Invalid backend"}},
+)
 def rag_answer(req: RagAnswerRequest) -> RagAnswerResponse:
     client = get_llm_client(
         use_dummy=settings.use_dummy_llm,
@@ -68,7 +72,7 @@ def rag_answer(req: RagAnswerRequest) -> RagAnswerResponse:
 class AgentAskRequest(BaseModel):
     question: str
     backend: str = "hybrid"
-    max_turns: int | None = None
+    max_turns: int | None = Field(default=None, ge=1, le=20)
 
 
 class AgentStepOut(BaseModel):
@@ -87,7 +91,11 @@ class AgentAskResponse(BaseModel):
     stopped_reason: str
 
 
-@router.post("/agent/ask", response_model=AgentAskResponse)
+@router.post(
+    "/agent/ask",
+    response_model=AgentAskResponse,
+    responses={400: {"description": "Invalid backend"}},
+)
 def agent_ask(req: AgentAskRequest) -> AgentAskResponse:
     client = get_agent_llm_client(
         use_dummy=settings.use_dummy_llm,

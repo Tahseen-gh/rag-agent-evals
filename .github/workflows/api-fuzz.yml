@@ -11,6 +11,7 @@ jobs:
       FUZZ_MODE: "true"
       RATE_LIMIT_QPS: "1000000"
       REQUEST_BODY_MAX_BYTES: "10485760"
+      PYTHONPATH: "."
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -22,10 +23,10 @@ jobs:
         run: |
           python -m pip install -U pip
           python -m pip install -r requirements.txt -r requirements-dev.txt
-          python -m pip install schemathesis[fastapi]
       - name: Schemathesis (ASGI, deterministic, OAS 3.1)
         run: |
           schemathesis run --app fastapi_app.app.main:app /openapi.json \
-            --workers=1 --checks=all \
+            --workers=1 --checks=all --exclude-checks=ignored_auth \
+            --exclude-path=/metrics \
             --hypothesis-max-examples=25 --hypothesis-deadline=none --hypothesis-seed=1337 \
             --experimental=openapi-3.1

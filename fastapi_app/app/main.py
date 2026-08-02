@@ -7,7 +7,7 @@ from typing import Any
 
 import jwt
 import structlog
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.security import APIKeyHeader, HTTPAuthorizationCredentials, HTTPBearer
 from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
@@ -155,8 +155,11 @@ def health() -> dict[str, Any]:
     return {"ok": True, "version": APP_VERSION, "git_sha": GIT_SHA}
 
 
-@app.get("/api/v1/search")
-def search(q: str, backend: str = "bm25", k: int = 5) -> dict[str, Any]:
+@app.get(
+    "/api/v1/search",
+    responses={400: {"description": "Invalid backend"}},
+)
+def search(q: str, backend: str = "bm25", k: int = Query(default=5, ge=1, le=50)) -> dict[str, Any]:
     try:
         retr = get_backend(
             backend,
