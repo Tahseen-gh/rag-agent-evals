@@ -1,0 +1,28 @@
+# Agentic Workflows
+
+An agent, in the context of language models, is a system where the model
+doesn't just produce a single answer but repeatedly decides what to do next
+— call a tool, ask a clarifying question, or stop and answer — based on the
+results of its previous actions. This differs from a single-shot RAG call
+in that the number and sequence of steps isn't fixed in advance; the model
+determines the plan as it goes, which lets it handle tasks that require
+multiple searches, intermediate computation, or adapting based on what an
+earlier step returned.
+
+The basic agent loop is: send the model the conversation so far plus the
+available tools; if the model requests a tool call, execute it and append
+the result to the conversation as a new turn; repeat until the model
+returns a final answer instead of a tool call, or until a maximum number of
+turns is reached. That turn limit is not optional in a production system —
+without it, a model that gets stuck in an unproductive loop (repeatedly
+calling the same tool, or alternating between two tools without making
+progress) will run indefinitely and burn cost.
+
+Agentic workflows trade predictability for capability. A fixed RAG pipeline
+is easy to reason about and cheap to evaluate because its steps are known in
+advance; an agent's path through a task varies by input, which makes it
+more capable of handling tasks a fixed pipeline can't, but also harder to
+test exhaustively and easier to send down an unproductive path. This is why
+agent evaluation typically checks not just the final answer but properties
+of the trajectory itself: did it call the right tools, did it stop in a
+reasonable number of steps, did it avoid unnecessary or redundant calls.

@@ -1,0 +1,25 @@
+# Vector Databases and Approximate Nearest Neighbor Search
+
+A vector database stores embeddings and answers nearest-neighbor queries:
+given a query vector, return the k stored vectors most similar to it. Exact
+nearest-neighbor search is a linear scan over every stored vector, which is
+fine for a few thousand items but becomes too slow as a corpus grows into
+the millions. Approximate nearest neighbor (ANN) indexes trade a small,
+tunable amount of recall for large gains in query speed.
+
+FAISS's IndexFlatIP is an example of an exact index: it computes the true
+inner product against every vector, guaranteeing correct results at the
+cost of linear scan time. Approximate indexes like HNSW (hierarchical
+navigable small world graphs) or IVF (inverted file index with
+quantization) build a structure that lets a query skip most of the corpus
+while still finding neighbors that are very likely, but not guaranteed, to
+be the true top-k.
+
+The choice between exact and approximate search is a scale and latency
+question: for corpora up to roughly a few hundred thousand vectors, exact
+search on modern hardware is often fast enough that the added complexity
+and recall risk of an approximate index isn't worth it. Past that scale, or
+under tight latency budgets, ANN indexes become necessary, and their
+parameters (the number of graph neighbors in HNSW, the number of clusters
+probed in IVF) need to be tuned against a recall target the same way any
+other retrieval hyperparameter would be.

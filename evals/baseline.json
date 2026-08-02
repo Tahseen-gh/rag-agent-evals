@@ -1,0 +1,21 @@
+{
+  "git_sha": "495afb29edaf1133bf27232af7d3a1324f14e756",
+  "backend": "bm25",
+  "seed": 1337,
+  "manifest_version": "b946b45a",
+  "metrics": {
+    "recall@1": 0.9795918367346939,
+    "recall@3": 1.0,
+    "recall@5": 1.0,
+    "recall@10": 1.0,
+    "MRR": 0.9897959183673469,
+    "NDCG@10": 0.9865244836427169
+  },
+  "stats": {
+    "queries": 49,
+    "docs": 24
+  },
+  "versions": {
+    "numpy": "2.4.6"
+  }
+}

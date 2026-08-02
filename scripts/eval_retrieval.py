@@ -122,7 +122,7 @@ def evaluate(backend_name: str, k: int, seed: int, manifest_path: Path) -> dict[
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Evaluate retrieval quality")
-    parser.add_argument("--backend", choices=["bm25", "embed", "hybrid"], required=True)
+    parser.add_argument("--backend", choices=["bm25", "embed", "hybrid", "learned"], required=True)
     parser.add_argument("--k", type=int, default=10)
     parser.add_argument("--seed", type=int, default=1337)
     parser.add_argument("--manifest", type=Path, default=Path("data/manifest.json"))

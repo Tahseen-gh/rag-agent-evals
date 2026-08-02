@@ -1,0 +1,32 @@
+# Tool Use and Function Calling
+
+Tool use (also called function calling) lets a language model request that
+the calling application execute a specific function with specific
+arguments, rather than only producing text. The model is given a list of
+available tools, each with a name, a natural-language description, and a
+JSON schema for its arguments. When the model decides a tool would help
+answer the current request, it emits a structured tool-call request instead
+of a final answer; the application executes the corresponding function and
+returns the result to the model as a new message, and the model continues
+from there — possibly calling another tool, or producing its final answer.
+
+This turns a single request-response call into a loop, and it is the
+mechanism that lets a language model take actions in the world: searching a
+document store, calling an internal API, running a calculation, querying a
+database. The model itself never executes anything; it only requests an
+action and interprets the result the caller returns.
+
+Tool descriptions matter more than they might seem to: a vague or
+ambiguous description of what a tool does and when to use it is one of the
+most common causes of a model either failing to call a tool it should have,
+or calling the wrong one. Argument schemas should be as narrow as the task
+allows — an enum with three valid strings is much harder to misuse than a
+free-text field — because tighter schemas leave less room for the model to
+pass malformed or nonsensical input.
+
+Tool use is also a security boundary: because the model can request
+arbitrary arguments within a tool's schema, an application should apply the
+same validation and authorization to a tool call that it would to a
+user-submitted request through any other interface, especially if any part
+of the arguments could be influenced by untrusted retrieved or user-supplied
+text elsewhere in the conversation.

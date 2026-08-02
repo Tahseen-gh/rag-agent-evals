@@ -36,20 +36,24 @@ jobs:
           python -m pip install -r requirements.txt -r requirements-dev.txt
           python -m pip install sentence-transformers
           python -m pip install faiss-cpu || true
-      - name: Eval bm25
+      - name: Eval bm25 (deterministic, gates CI)
         run: |
           python scripts/eval_retrieval.py --backend bm25 --k 10 --seed 1337
           cp evals/latest.json eval-bm25.json
-      - name: Eval embed
+      - name: Compare bm25 to baseline
+        # bm25 is the only backend with no external model download, so it's the
+        # only one we hard-gate on: it can't flake on network/model availability.
+        run: python scripts/compare_eval.py --current eval-bm25.json --baseline evals/baseline.json --delta 0.01 --gate-metrics recall@3,MRR,NDCG@10
+      - name: Eval embed (informational, requires model download)
+        continue-on-error: true
         run: |
           python scripts/eval_retrieval.py --backend embed --k 10 --seed 1337
           cp evals/latest.json eval-embed.json
-      - name: Eval hybrid
+      - name: Eval hybrid (informational, requires model download)
+        continue-on-error: true
         run: |
           python scripts/eval_retrieval.py --backend hybrid --k 10 --seed 1337
           cp evals/latest.json eval-hybrid.json
-      - name: Compare to baseline
-        run: python scripts/compare_eval.py --current evals/latest.json --baseline evals/baseline.json --delta 0.01 --gate-metrics recall@3,MRR,NDCG@10
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -58,16 +62,21 @@ jobs:
             eval-bm25.json
             eval-embed.json
             eval-hybrid.json
+          if-no-files-found: warn
       - name: Summary
         run: |
           python - <<'PY'
-import json, pathlib, os
+import json, pathlib
 rows = []
-for name in ['bm25','embed','hybrid']:
-    data = json.loads(pathlib.Path(f'eval-{name}.json').read_text())
-    m = data['metrics']
-    rows.append(f"| {name} | {m['recall@3']:.3f} | {m['MRR']:.3f} | {m['NDCG@10']:.3f} |")
-print('| backend | recall@3 | MRR | NDCG@10 |')
-print('|---|---|---|---|')
+for name in ['bm25', 'embed', 'hybrid']:
+    p = pathlib.Path(f'eval-{name}.json')
+    if not p.exists():
+        rows.append(f"| {name} | n/a | n/a | n/a | not available (model download failed/blocked) |")
+        continue
+    m = json.loads(p.read_text())['metrics']
+    gated = " (CI gate)" if name == "bm25" else ""
+    rows.append(f"| {name} | {m['recall@3']:.3f} | {m['MRR']:.3f} | {m['NDCG@10']:.3f} |{gated} |")
+print('| backend | recall@3 | MRR | NDCG@10 | notes |')
+print('|---|---|---|---|---|')
 print('\n'.join(rows))
 PY >> $GITHUB_STEP_SUMMARY

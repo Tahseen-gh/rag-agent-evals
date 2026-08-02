@@ -1,0 +1,31 @@
+# Jailbreaking and Red-Teaming
+
+A jailbreak is a prompt engineered to make a model bypass its safety
+training and produce output it was trained to refuse — instructions for
+building weapons, generating hateful content, or violating its usage
+policy. Jailbreak techniques include role-play framing (asking the model to
+"pretend" to be an unrestricted AI persona), instruction-hierarchy attacks
+(claiming false authority, such as pretending to be a developer issuing a
+system override), and obfuscation (encoding a harmful request so it isn't
+recognized by pattern-based filters while still being interpretable by the
+model).
+
+Red-teaming is the practice of deliberately attempting these attacks
+against a model or application, systematically and before deployment,
+specifically to find and fix weaknesses rather than to cause harm. A
+red-team exercise typically maintains a corpus of known attack patterns,
+generates new variations (manually or with another model), and measures the
+system's refusal rate and, just as important, its false-refusal rate on
+clearly benign requests that happen to resemble attack patterns
+superficially — a system that refuses too aggressively is also broken, just
+in the opposite direction.
+
+Model-level safety training and application-level guardrails are
+complementary, not substitutes for each other. A well-trained model resists
+most jailbreak attempts on its own, but an application that also enforces
+policy at the system-prompt and tool-authorization level (the same
+least-privilege principle relevant to prompt injection) has a second layer
+of defense if any individual jailbreak technique succeeds against the model
+itself. Red-teaming needs to be continuous rather than a one-time
+pre-launch check, because new jailbreak techniques are discovered and
+shared publicly on an ongoing basis after a model ships.

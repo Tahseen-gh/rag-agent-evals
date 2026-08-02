@@ -1,0 +1,27 @@
+# LLM-as-Judge Evaluation
+
+An LLM-as-judge evaluation uses one language model to score the output of
+another, typically by prompting the judge with the question, the candidate
+answer, and a reference answer or grading rubric, then asking for a
+correctness verdict. This is useful precisely where deterministic checks
+fail: free-form answers rarely match a reference string exactly, but a
+capable judge model can recognize that two differently worded answers are
+substantively the same, or that an answer is fluent but factually wrong.
+
+LLM judges are not free of problems. They exhibit position bias (favoring
+whichever answer appears first when comparing two candidates), verbosity
+bias (favoring longer answers even when they aren't more correct), and
+self-preference bias (a model judging its own outputs, or outputs from a
+closely related model, more favorably). Judges also disagree with each
+other and with human raters at a nontrivial rate, so a single judge score
+should be treated as a noisy estimate rather than ground truth.
+
+Mitigations include using a structured rubric instead of an open-ended
+"is this good" prompt, asking the judge for a rationale before a verdict to
+reduce snap judgments, running the same judgment multiple times and taking
+a majority vote, and periodically auditing judge scores against a sample of
+human ratings to check the judge hasn't drifted from what a human would
+say. Because LLM-judge calls cost money and add latency, many teams also
+run a fast, deterministic heuristic check (keyword containment, citation
+presence, exact match) as a first-pass filter and reserve the LLM judge for
+cases the heuristic can't resolve confidently.

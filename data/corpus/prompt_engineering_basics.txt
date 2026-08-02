@@ -1,0 +1,28 @@
+# Prompt Engineering Fundamentals
+
+Prompt engineering is the practice of structuring the input to a language
+model to reliably get the behavior you want, without changing the model's
+weights. A few patterns show up repeatedly across tasks. Being specific
+about the desired output format — "respond with a JSON object matching this
+schema" rather than "tell me about X" — reduces the model's freedom to
+wander and makes downstream parsing reliable. Providing a small number of
+worked examples (few-shot prompting) is often more effective than a long
+written description of the task, especially for formatting conventions that
+are easier to demonstrate than describe.
+
+Separating instructions from data is a security-relevant pattern as well as
+a correctness one: when untrusted content (a retrieved document, a user
+upload) is inserted into a prompt, it should be clearly delimited from the
+instructions so the model is less likely to treat text inside the data as a
+new instruction to follow.
+
+Chain-of-thought prompting — asking the model to reason step by step before
+giving a final answer — improves accuracy on multi-step reasoning tasks by
+giving the model intermediate computation to condition on, though it also
+increases token cost and latency, so it's typically reserved for tasks that
+actually need multi-step reasoning rather than applied universally.
+
+Prompts should be treated as versioned artifacts, not one-off strings: a
+change to a prompt is a change to system behavior, and evaluating that
+change against a fixed test set before shipping it is the same discipline
+applied to any other code change with observable behavior.

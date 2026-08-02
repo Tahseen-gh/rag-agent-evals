@@ -1,0 +1,28 @@
+# Hybrid Retrieval and Score Fusion
+
+Hybrid retrieval combines a sparse method like BM25 with a dense embedding
+method, then fuses their two rankings into one. The motivation is
+complementary failure modes: BM25 is strong on exact lexical matches and
+weak on paraphrase, while embeddings are strong on paraphrase and weaker on
+rare exact tokens. Fusing them tends to outperform either method alone
+across a broad query mix.
+
+The simplest fusion approach is score-level: normalize each method's scores
+to a comparable range (min-max normalization is common, since BM25 and
+cosine similarity live on very different scales) and combine them with a
+weighted sum, `score = (1 - alpha) * bm25_norm + alpha * embed_norm`. The
+weight alpha controls how much the system trusts semantic versus lexical
+signal, and is usually tuned on a held-out query set rather than guessed.
+
+An alternative to a fixed hand-tuned alpha is a learned reranker: instead of
+picking one weight for every query, train a small classifier (for example
+logistic regression) on features like the BM25 score and the embedding
+score, with relevance labels from real query-document pairs, and let it
+learn the combination that best predicts relevance. This tends to
+outperform a single global alpha because it can implicitly weight the two
+signals differently depending on their magnitudes, at the cost of needing
+labeled training data and a training step before it can be deployed.
+
+Other fusion strategies exist, notably reciprocal rank fusion (RRF), which
+combines rankings by position rather than by score and avoids the need to
+normalize scores across methods at all.
