@@ -16,7 +16,7 @@ repos:
     hooks:
       - id: mypy
         args: ["--config-file=pyproject.toml"]
-        files: "^(fastapi_app|rag|ml)/"
+        files: "^(fastapi_app|rag|ml|ui)/"
         additional_dependencies:
           - types-requests
           - pydantic
@@ -45,6 +45,7 @@ repos:
           - ml
           - evals
           - scripts
+          - ui
           - -x
           - tests,__pycache__,.venv,build,dist
           - --severity-level

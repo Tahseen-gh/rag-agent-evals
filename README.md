@@ -12,6 +12,20 @@ Everything below is measured, not asserted: real retrieval, real generation
 real numbers — see [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md) for every result
 computed end to end, with reproduction commands.
 
+## Try it
+
+**[Live demo](https://your-app-name.streamlit.app)** *(deploy `ui/app.py` on
+[Streamlit Community Cloud](https://share.streamlit.io) and swap this link)* —
+ask a question, compare retrieval backends side by side, and see the eval
+numbers computed live in your browser. No API key needed by default
+(retrieval, the agent loop, and evals are all fully real either way; only the
+final generation step is a deterministic stand-in unless you paste your own
+key into the sidebar for that session).
+
+![Demo: asking a question, comparing retrieval backends, and live eval numbers](docs/images/demo.gif)
+
+Run it locally: `pip install -r requirements.txt && streamlit run ui/app.py`
+
 ## How it works
 
 1. **A knowledge base.** 24 documents on AI / retrieval / agent concepts,
@@ -42,11 +56,13 @@ with numbers that the thing works.
 
 - **FastAPI** service: retrieval (`bm25`/`embed`/`hybrid`/`learned` backends),
   cited RAG answers, a tool-calling agent, health/readiness
+- **Streamlit UI** (`ui/`): chat over the corpus, a retrieval backend
+  comparison view, and a live evals dashboard - see "Try it" above
 - Project layout: `fastapi_app/` (API), `rag/` (retrieval, generation, agent),
-  `evals/` (datasets & scoring), `ml/` (learned reranker)
+  `evals/` (datasets & scoring), `ml/` (learned reranker), `ui/` (Streamlit UI)
 - Tooling: Docker, docker-compose, Makefile, pre-commit
   (black/ruff/bandit/mypy), GitHub Actions CI
-- Tests: pytest, 50+ tests, coverage-gated in CI
+- Tests: pytest, 60+ tests, coverage-gated in CI
 
 Every generation and agent code path is real (it uses the `anthropic` SDK when
 `ANTHROPIC_API_KEY` is set), but defaults to a deterministic, dependency-free
@@ -79,6 +95,9 @@ python -m pip install -r requirements.txt -r requirements-dev.txt
 # 3) Run the API (hot reload for dev)
 uvicorn fastapi_app.app.main:app --reload
 
+# 3b) ...or run the Streamlit UI instead (see "Try it" above)
+streamlit run ui/app.py
+
 # 4) Check health
 curl -s http://127.0.0.1:8000/api/v1/health
 # If the API key is enabled:
@@ -92,14 +111,19 @@ pytest -q
 pre-commit run --all-files
 ```
 
+The Docker image (`make up` / `docker compose up`) runs the FastAPI service
+only; the Streamlit UI isn't containerized separately - run it with the
+`streamlit run` command above, or deploy it directly to Streamlit Community
+Cloud as described in "Try it".
+
 ## Structure
 
 ```
 fastapi_app/      # API app (FastAPI): search, rag/answer, agent/ask, health/ready
 rag/              # retrieval backends, ingestion, chunking, generation, agent, llm client
 evals/            # eval datasets & runners (retrieval metrics + generation scoring)
-infra/            # docker-compose and ops bits
 ml/               # learned reranker: training, evaluation, persisted weights
+ui/               # Streamlit UI: chat, retrieval explorer, live evals dashboard
 ```
 
 ## Retrieval backends
@@ -207,7 +231,7 @@ determinism.
 
 ```bash
 pre-commit run --all-files
-bandit -r fastapi_app rag ml evals scripts -x tests,__pycache__ --severity-level medium --confidence-level medium
+bandit -r fastapi_app rag ml evals scripts ui -x tests,__pycache__ --severity-level medium --confidence-level medium
 pip-audit -r requirements.txt
 ```
 

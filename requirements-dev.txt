@@ -9,4 +9,3 @@ bandit>=1.7
 pip-audit>=2.9
 schemathesis[fastapi]>=3.27.6,<4
 detect-secrets>=1.5.0
-scikit-learn>=1.4

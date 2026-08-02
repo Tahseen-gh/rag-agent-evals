@@ -15,3 +15,14 @@ def test_chunking_headings_and_overlap():
         assert tail[:40] in b.text
     assert chunks[0].heading == "Intro"
     assert any(c.heading == "Details" for c in chunks)
+
+
+def test_chunking_preserves_whitespace_between_sentences():
+    # A chunk spanning multiple sentences must not silently glue them
+    # together - "sentence.It" reads as one word rather than two.
+    text = "First sentence here. Second sentence follows. Third one too."
+    chunks = chunk_text("doc1", text, max_chars=500, overlap=0)
+    assert len(chunks) == 1
+    assert "here. Second" in chunks[0].text
+    assert "follows. Third" in chunks[0].text
+    assert "here.Second" not in chunks[0].text
