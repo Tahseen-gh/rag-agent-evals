@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import os
 import uuid
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
+from contextlib import asynccontextmanager
 from typing import Any
 
 import jwt
@@ -38,7 +39,24 @@ logger = structlog.get_logger("app")
 
 
 # --- app ------------------------------------------------------------------
-app = FastAPI(title=settings.app_name, debug=settings.debug, openapi_url="/openapi.json")
+@asynccontextmanager
+async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
+    configure_logging(settings)
+    try:
+        from fastapi_app.app.telemetry import init_otel  # local import to avoid E402
+
+        init_otel()
+    except Exception:  # pragma: no cover - optional telemetry
+        pass
+    yield
+
+
+app = FastAPI(
+    title=settings.app_name,
+    debug=settings.debug,
+    openapi_url="/openapi.json",
+    lifespan=_lifespan,
+)
 
 if settings.cors_origins:
     app.add_middleware(
@@ -242,15 +260,3 @@ def sink_endpoint(_: Any = None) -> dict[str, Any]:
 # Mount the v1 API router plus the small ops router (readiness, secure ping, sink)
 app.include_router(v1_router, prefix="/api/v1")
 app.include_router(ops_router, prefix="/api/v1")
-
-
-# --- startup hook --------------------------------------------------------
-@app.on_event("startup")
-def _startup() -> None:
-    configure_logging(settings)
-    try:
-        from fastapi_app.app.telemetry import init_otel  # local import to avoid E402
-
-        init_otel()
-    except Exception:  # pragma: no cover - optional telemetry
-        pass

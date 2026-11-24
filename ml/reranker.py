@@ -13,6 +13,7 @@ from typing import Any
 
 import numpy as np
 
+from rag.backends.base import minmax
 from rag.backends.bm25 import BM25Backend
 from rag.backends.embed import EmbeddingBackend
 from rag.ingestion import load_corpus, load_queries
@@ -20,15 +21,6 @@ from rag.retriever import _embedding_model
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_WEIGHTS_PATH = REPO_ROOT / "ml" / "artifacts" / "reranker_weights.json"
-
-
-def _minmax(scores: list[float]) -> list[float]:
-    if not scores:
-        return []
-    lo, hi = min(scores), max(scores)
-    if hi - lo == 0:
-        return [0.0 for _ in scores]
-    return [(s - lo) / (hi - lo) for s in scores]
 
 
 @dataclass(frozen=True)
@@ -55,8 +47,8 @@ def _per_query_norm_scores(
     n = len(ids)
     bm_scores = dict(bm25.search(query_text, k=n))
     em_scores = dict(embed.search(query_text, k=n))
-    bm_norm = dict(zip(ids, _minmax([bm_scores.get(i, 0.0) for i in ids]), strict=True))
-    em_norm = dict(zip(ids, _minmax([em_scores.get(i, 0.0) for i in ids]), strict=True))
+    bm_norm = dict(zip(ids, minmax([bm_scores.get(i, 0.0) for i in ids]), strict=True))
+    em_norm = dict(zip(ids, minmax([em_scores.get(i, 0.0) for i in ids]), strict=True))
     return bm_norm, em_norm
 
 
