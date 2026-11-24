@@ -281,10 +281,14 @@ loop code runs against the real model.
   too (informational, not gated - see the workflow file for why).
 - **No live LLM generation/agent numbers in this document yet.** Real
   generation/agent numbers need `ANTHROPIC_API_KEY` set and `USE_DUMMY_LLM=false`.
-  The key has been configured in the environment but requires a session
-  restart to take effect, which hasn't happened yet as of this writing.
-  Every generation/agent code path is real and has been exercised end-to-end
-  against the deterministic dummy client in the meantime; the exact commands
-  to produce real numbers once the key is live are in sections 4 and 5
-  above, and this section will be updated once they've actually been run -
-  not estimated or assumed.
+  The key is configured on the environment (confirmed via the environment's
+  own tooling), but a fresh session on that same environment still does not
+  see it in its process environment - `'ANTHROPIC_API_KEY' in os.environ`
+  prints `False`. The earlier assumption that a session restart would be
+  enough was wrong; this looks like an environment-config propagation issue
+  rather than something fixable from inside a session, and is pending
+  action outside this repo. Every generation/agent code path is real and
+  has been exercised end-to-end against the deterministic dummy client in
+  the meantime; the exact commands to produce real numbers once the key is
+  actually reachable are in sections 4 and 5 above, and this section will be
+  updated once they've actually been run - not estimated or assumed.
