@@ -1,14 +1,15 @@
 from __future__ import annotations
 
+import pytest
 from fastapi.testclient import TestClient
 
 from fastapi_app.app import config
 from fastapi_app.app.main import app
 
 
-def test_agent_ask_endpoint_dummy_mode() -> None:
-    config.settings.use_dummy_embeddings = True
-    config.settings.use_dummy_llm = True
+def test_agent_ask_endpoint_dummy_mode(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(config.settings, "use_dummy_embeddings", True)
+    monkeypatch.setattr(config.settings, "use_dummy_llm", True)
     client = TestClient(app)
     r = client.post("/api/v1/agent/ask", json={"question": "What is BM25?", "backend": "bm25"})
     assert r.status_code == 200
@@ -21,9 +22,9 @@ def test_agent_ask_endpoint_dummy_mode() -> None:
     assert data["answer"]
 
 
-def test_agent_ask_endpoint_invalid_backend() -> None:
-    config.settings.use_dummy_embeddings = True
-    config.settings.use_dummy_llm = True
+def test_agent_ask_endpoint_invalid_backend(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(config.settings, "use_dummy_embeddings", True)
+    monkeypatch.setattr(config.settings, "use_dummy_llm", True)
     client = TestClient(app)
     r = client.post("/api/v1/agent/ask", json={"question": "anything", "backend": "nonexistent"})
     assert r.status_code == 400

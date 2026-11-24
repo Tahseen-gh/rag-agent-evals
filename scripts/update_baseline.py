@@ -21,7 +21,8 @@ def main() -> None:
     report = json.loads(src.read_text())
     baseline_log = Path("evals/BASELINE_LOG.md")
     baseline_log.parent.mkdir(exist_ok=True)
-    line = f"- {datetime.datetime.utcnow().isoformat()} baseline from {src.name} (sha {report.get('git_sha')})\n"
+    now = datetime.datetime.now(datetime.UTC).isoformat()
+    line = f"- {now} baseline from {src.name} (sha {report.get('git_sha')})\n"
     with baseline_log.open("a") as f:
         f.write(line)
     print(f"Baseline updated from {src}")

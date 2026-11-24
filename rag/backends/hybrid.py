@@ -1,17 +1,8 @@
 from __future__ import annotations
 
-from .base import RetrievalBackend
+from .base import RetrievalBackend, minmax
 from .bm25 import BM25Backend
 from .embed import EmbeddingBackend
-
-
-def _minmax(scores: list[float]) -> list[float]:
-    if not scores:
-        return []
-    lo, hi = min(scores), max(scores)
-    if hi - lo == 0:
-        return [0.0 for _ in scores]
-    return [(s - lo) / (hi - lo) for s in scores]
 
 
 class HybridBackend(RetrievalBackend):
@@ -34,8 +25,8 @@ class HybridBackend(RetrievalBackend):
         ids = sorted({doc_id for doc_id, _ in bm} | {doc_id for doc_id, _ in em})
         bm_scores = {doc_id: score for doc_id, score in bm}
         em_scores = {doc_id: score for doc_id, score in em}
-        bm_norm = _minmax([bm_scores.get(i, 0.0) for i in ids])
-        em_norm = _minmax([em_scores.get(i, 0.0) for i in ids])
+        bm_norm = minmax([bm_scores.get(i, 0.0) for i in ids])
+        em_norm = minmax([em_scores.get(i, 0.0) for i in ids])
         fused = [
             (
                 ids[i],

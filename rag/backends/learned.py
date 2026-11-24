@@ -4,7 +4,7 @@ import json
 import math
 from pathlib import Path
 
-from .base import RetrievalBackend
+from .base import RetrievalBackend, minmax
 from .bm25 import BM25Backend
 from .embed import EmbeddingBackend
 
@@ -14,15 +14,6 @@ DEFAULT_WEIGHTS_PATH = (
 REAL_EMBED_WEIGHTS_PATH = (
     Path(__file__).resolve().parents[2] / "ml" / "artifacts" / "reranker_weights_real_embed.json"
 )
-
-
-def _minmax(scores: list[float]) -> list[float]:
-    if not scores:
-        return []
-    lo, hi = min(scores), max(scores)
-    if hi - lo == 0:
-        return [0.0 for _ in scores]
-    return [(s - lo) / (hi - lo) for s in scores]
 
 
 class LearnedRerankBackend(RetrievalBackend):
@@ -63,10 +54,10 @@ class LearnedRerankBackend(RetrievalBackend):
         bm_scores = dict(self.bm25.search(query, k=n))
         em_scores = dict(self.embed.search(query, k=n))
         bm_norm = dict(
-            zip(self._ids, _minmax([bm_scores.get(i, 0.0) for i in self._ids]), strict=True)
+            zip(self._ids, minmax([bm_scores.get(i, 0.0) for i in self._ids]), strict=True)
         )
         em_norm = dict(
-            zip(self._ids, _minmax([em_scores.get(i, 0.0) for i in self._ids]), strict=True)
+            zip(self._ids, minmax([em_scores.get(i, 0.0) for i in self._ids]), strict=True)
         )
         scored = [(i, self._score(bm_norm[i], em_norm[i])) for i in self._ids]
         scored.sort(key=lambda x: (-x[1], x[0]))

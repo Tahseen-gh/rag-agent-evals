@@ -30,7 +30,7 @@ def _make_tiny_dataset(tmp: Path) -> Path:
         "docs": docs_dict,
         "docs_count": 2,
         "queries_count": len(queries),
-        "created_at": datetime.datetime.utcnow().isoformat(),
+        "created_at": datetime.datetime.now(datetime.UTC).isoformat(),
     }
     hash_input = "".join(sorted(docs_dict.values())) + str(len(queries))
     manifest["version"] = hashlib.sha256(hash_input.encode()).hexdigest()[:8]

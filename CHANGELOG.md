@@ -33,6 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Misplaced test file `tests/rag/test_backends.py` (unit-testing `EmbeddingBackend`/`HybridBackend` directly rather than via the API, duplicating the scope of `rag/tests/`) split into `rag/tests/test_embed.py` / `test_hybrid.py`, matching the existing per-backend naming convention; the unit-vs-integration test-location rule documented in `CONTRIBUTING.md`.
 - `actions/checkout` bumped v4 -> v5 across all 5 workflow files.
 - `make.ps1`'s `setup` now installs `requirements-dev.txt` too, matching the Makefile's `install` (was silently missing `pytest-cov` and friends on Windows).
+- `fastapi_app/app/main.py`: replaced the deprecated `@app.on_event("startup")` hook with a `lifespan` context manager (same startup behavior - `configure_logging` + `init_otel` - just on the API FastAPI itself expects going forward).
+- `_minmax()` was defined identically in three places (`rag/backends/hybrid.py`, `rag/backends/learned.py`, `ml/reranker.py`); consolidated into one `minmax()` in `rag/backends/base.py`, imported by all three.
+- `requirements.txt`: dropped `pytest` (a dev/test tool, not a runtime dependency - already declared correctly in `requirements-dev.txt`) and `ragas` (listed but never imported anywhere in the codebase). Bumped `fastapi` to a pinned `0.128.0` and `prometheus-fastapi-instrumentator` to `>=7.0.0,<8.0.0` to resolve a `starlette` CVE without pulling in `starlette>=1.0`, which `prometheus-fastapi-instrumentator>=8.0` requires but the pinned `schemathesis` (and the `api-fuzz.yml` workflow built on it) does not yet support - see `SECURITY.md` for the residual, intentionally-deferred part of this.
+- Added `rag/backends/__init__.py` and `fastapi_app/app/api/__init__.py` - both packages worked via Python's implicit namespace-package support, but every other package in the repo has an explicit `__init__.py` (even empty ones), so this was just an inconsistency.
 
 ### Fixed
 - `rag/chunking.py`: `chunk_text()` joined sentence spans without their separating whitespace, silently gluing chunk-internal sentence boundaries together (e.g. "sentence.It" instead of "sentence. It"). Found via manual UI testing, not by any prior automated test; added a regression test.
@@ -47,9 +51,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The prompt-injection test's own first assertion was over-strict: it banned any mention of the attempted tool's name in the agent's answer, which fired on the model naming-and-refusing the attack (correct behavior), not on compliance. Corrected to check for actual compliance language instead.
 - `SECURITY.md` had a literal unfilled `email SECURITY_CONTACT (replace)` placeholder - replaced with GitHub's private security advisory flow.
 - Closed 6 long-stale Dependabot PRs (#5-#10, opened 2025-08-29): all but #5 only touched `requirements-lock.txt`, deleted months ago in this project's rewrite, or bumped pins no longer used in their exact-pinned form; all had diverged too far from `main` to merge (confirmed via merge-conflict errors on both the merge and branch-update APIs) regardless.
+- `fastapi_app/app/api/v1.py` declared its own `GET /health` returning `{"status": "ok"}`, but `fastapi_app/app/main.py` registers its own `/api/v1/health` *before* mounting that router, so the router's handler was permanently shadowed and unreachable in the real app (verified by hitting the live app - `main.py`'s handler always won). It was only "passing" via `fastapi_app/tests/test_api_router.py`, which built the router into its own standalone `FastAPI()` instance rather than testing the real app. Removed the dead route and its isolation-only test.
+- `docs/EXPERIMENTS.md` section 3 referred to "this 50-doc-scale corpus," but the corpus is 24 documents everywhere else in the repo (manifest, datasheet, README) - a leftover inconsistency in a document whose whole premise is "every number here is measured, not asserted." Corrected to 24.
+- Deprecated `datetime.datetime.utcnow()` replaced with `datetime.datetime.now(datetime.UTC)` in `scripts/update_baseline.py` and `tests/evals/test_eval_scripts.py`.
+- `tests/rag/test_api.py`, `test_agent_api.py`, `test_rag_answer_api.py` mutated the shared `fastapi_app.app.config.settings` singleton directly with no teardown; switched to `monkeypatch.setattr`, which pytest restores automatically after each test.
 
 ### Security
--
+- `pip-audit` flagged a CVE on the pinned `pytest==8.4.1` in `requirements.txt`; resolved by removing it from runtime deps entirely (see Changed).
+- `pip-audit` also flagged several CVEs on the `starlette` version pulled in by the previously-pinned `fastapi==0.116.1`; bumping `fastapi` to `0.128.0` resolves one of them (the rest need a `starlette>=1.0` migration that isn't safe to do as part of this pass - see `SECURITY.md`'s new "Known pip-audit findings" section for the full reasoning and what's blocking it).
 
 ## [0.1.0] - 2025-08-XX
 ### Added

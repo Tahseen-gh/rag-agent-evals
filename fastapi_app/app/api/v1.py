@@ -10,11 +10,6 @@ from rag.generation import answer_question, get_llm_client
 router = APIRouter()
 
 
-@router.get("/health")
-def health() -> dict[str, Any]:
-    return {"status": "ok"}
-
-
 class RagAnswerRequest(BaseModel):
     question: str
     backend: str = "hybrid"

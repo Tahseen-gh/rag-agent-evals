@@ -195,7 +195,7 @@ number of BM25/embedding computations per query. I'd expect the accuracy
 curve to bend on a larger, noisier, less topically-separated corpus (e.g.
 many documents about the same product, where a whole-document embedding
 would blur together several unrelated sub-topics) - that's a case this
-50-doc-scale corpus doesn't exercise, and worth flagging rather than
+24-doc-scale corpus doesn't exercise, and worth flagging rather than
 overclaiming a tradeoff the data doesn't show.
 
 ## 4. End-to-end generation eval
