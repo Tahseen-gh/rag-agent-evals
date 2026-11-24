@@ -1,9 +1,7 @@
 """CLI entrypoint: train the learned reranker and report its metrics.
 
-Respects the same USE_DUMMY_EMBEDDINGS / EMBEDDING_MODEL settings as
-scripts/eval_retrieval.py, so the reranker is always trained on the same
-embedding signal it will be scored against at serving time (see
-rag/retriever.py::get_backend, which picks the matching weights file).
+Uses the same USE_DUMMY_EMBEDDINGS/EMBEDDING_MODEL settings as
+scripts/eval_retrieval.py, so training matches what get_backend serves.
 """
 
 from __future__ import annotations

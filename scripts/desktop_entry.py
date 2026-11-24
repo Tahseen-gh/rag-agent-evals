@@ -1,12 +1,9 @@
 """PyInstaller entrypoint: launches the Streamlit UI as a standalone desktop app.
 
-Streamlit execs ui/app.py as a real script file at runtime (its file-watcher
-and script-runner read it off disk), rather than importing it as frozen
-bytecode - so unlike a normal PyInstaller build, this app's own source tree
-(ui/, rag/, ml/, evals/, fastapi_app/, data/) has to ship as plain files via
---add-data rather than being frozen into the executable. Only third-party
-dependencies (streamlit, torch, sentence-transformers, ...) get frozen
-normally. See .github/workflows/build-windows.yml for the exact build.
+Streamlit execs ui/app.py off disk at runtime, not as frozen bytecode, so
+our own source (ui/, rag/, ml/, evals/, fastapi_app/, data/) ships as plain
+--add-data files - only third-party deps get frozen normally. See
+.github/workflows/build-windows.yml.
 """
 
 from __future__ import annotations
@@ -17,11 +14,8 @@ from pathlib import Path
 
 
 def _bundle_root() -> Path:
-    # PyInstaller sets sys._MEIPASS to the extraction root: a temp dir for
-    # --onefile, or the dist folder itself for --onedir. Either way, the
-    # --add-data trees land directly under it. Unfrozen (running this file
-    # directly with `python scripts/desktop_entry.py` for local testing),
-    # fall back to the repo root.
+    # sys._MEIPASS is where PyInstaller extracts --add-data to; falls back
+    # to repo root when run unfrozen (e.g. `python scripts/desktop_entry.py`)
     meipass = getattr(sys, "_MEIPASS", None)
     return Path(meipass) if meipass else Path(__file__).resolve().parent.parent
 
@@ -29,12 +23,7 @@ def _bundle_root() -> Path:
 def main() -> None:
     root = _bundle_root()
     sys.path.insert(0, str(root))
-    # Several modules (rag/ingestion.py, rag/backends/learned.py, ml/reranker.py)
-    # resolve data/model-artifact paths from Path(__file__).resolve().parents[N],
-    # not cwd, so this isn't load-bearing for those - but Streamlit itself and
-    # some of its dependencies do use cwd-relative lookups, so set it anyway to
-    # match a normal `streamlit run` invocation from the repo root.
-    os.chdir(root)
+    os.chdir(root)  # streamlit does some cwd-relative lookups
 
     import streamlit.web.cli as stcli
 

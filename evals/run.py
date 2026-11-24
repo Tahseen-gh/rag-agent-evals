@@ -1,14 +1,8 @@
 """Score the RAG pipeline's generated answers against evals/dataset/qas.jsonl.
 
-Two judges run against each question: a deterministic heuristic judge
-(keyword coverage of the gold answer, plus whether the correct source doc
-was cited) that needs no API key and always runs, and an optional LLM-judge
-pass using a real Anthropic client when --llm-judge is passed and an API key
-is reachable (EVAL_ANTHROPIC_API_KEY, falling back to ANTHROPIC_API_KEY -
-see fastapi_app/app/config.py:Settings.anthropic_api_key for why the former
-takes priority). Earlier versions of this script never called anything - it
-wrote "pred": "TBD" for every row without touching the RAG pipeline at all.
-This one actually runs it.
+Heuristic judge (keyword coverage + citation check) always runs, no key
+needed. Pass --llm-judge for a real Claude-graded pass too (needs
+EVAL_ANTHROPIC_API_KEY or ANTHROPIC_API_KEY - see fastapi_app/app/config.py).
 """
 
 from __future__ import annotations

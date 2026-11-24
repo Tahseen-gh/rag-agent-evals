@@ -59,12 +59,8 @@ def get_backend(
         backend = HybridBackend(bm, em, alpha=hybrid_alpha)
     elif name == "learned":
         model = _embedding_model(embedding_model, use_dummy_embeddings)
-        # The reranker's weights were fit against one specific embedding signal
-        # (dummy hash-based vs. real sentence-transformer scores have different
-        # distributions), so which weights file we load must match which
-        # embedding model we're about to score with - loading dummy-trained
-        # weights against real embedding scores (or vice versa) is a silent
-        # train/serve mismatch, not just a suboptimal fit.
+        # weights must match the embedding signal they were trained on, or it's a
+        # silent train/serve mismatch
         weights_path = DEFAULT_WEIGHTS_PATH if use_dummy_embeddings else REAL_EMBED_WEIGHTS_PATH
         if not weights_path.exists():
             logger.warning(
