@@ -19,8 +19,9 @@ from typing import Any
 import numpy as np
 
 from rag.backends.bm25 import BM25Backend
-from rag.backends.embed import DummyEmbeddingModel, EmbeddingBackend
+from rag.backends.embed import EmbeddingBackend
 from rag.ingestion import load_corpus, load_queries
+from rag.retriever import _embedding_model
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_WEIGHTS_PATH = REPO_ROOT / "ml" / "artifacts" / "reranker_weights.json"
@@ -65,12 +66,17 @@ def _per_query_norm_scores(
 
 
 def _build_features(
-    texts: list[str], ids: list[str], queries: list[dict[str, Any]]
+    texts: list[str],
+    ids: list[str],
+    queries: list[dict[str, Any]],
+    *,
+    embedding_model_name: str,
+    use_dummy_embeddings: bool,
 ) -> tuple[np.ndarray, np.ndarray]:
     """One row per (query, doc) pair: [bm25_norm, embed_norm] -> is_relevant."""
     bm25 = BM25Backend()
     bm25.build(texts, ids)
-    embed = EmbeddingBackend(DummyEmbeddingModel())
+    embed = EmbeddingBackend(_embedding_model(embedding_model_name, use_dummy_embeddings))
     embed.build(texts, ids)
 
     rows: list[list[float]] = []
@@ -90,12 +96,15 @@ def _recall_at_k(
     queries: list[dict[str, Any]],
     weights: RerankerWeights,
     k: int,
+    *,
+    embedding_model_name: str,
+    use_dummy_embeddings: bool,
 ) -> float:
     if not queries:
         return float("nan")
     bm25 = BM25Backend()
     bm25.build(texts, ids)
-    embed = EmbeddingBackend(DummyEmbeddingModel())
+    embed = EmbeddingBackend(_embedding_model(embedding_model_name, use_dummy_embeddings))
     embed.build(texts, ids)
     hits = 0
     for q in queries:
@@ -112,6 +121,8 @@ def train_and_evaluate(
     seed: int = 1337,
     val_fraction: float = 0.2,
     weights_path: Path = DEFAULT_WEIGHTS_PATH,
+    embedding_model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
+    use_dummy_embeddings: bool = True,
 ) -> dict[str, Any]:
     from sklearn.linear_model import LogisticRegression
     from sklearn.metrics import accuracy_score, roc_auc_score
@@ -127,8 +138,20 @@ def train_and_evaluate(
     train_queries = [q for i, q in enumerate(queries) if i not in val_idx]
     val_queries = [q for i, q in enumerate(queries) if i in val_idx]
 
-    x_train, y_train = _build_features(texts, ids, train_queries)
-    x_val, y_val = _build_features(texts, ids, val_queries)
+    x_train, y_train = _build_features(
+        texts,
+        ids,
+        train_queries,
+        embedding_model_name=embedding_model_name,
+        use_dummy_embeddings=use_dummy_embeddings,
+    )
+    x_val, y_val = _build_features(
+        texts,
+        ids,
+        val_queries,
+        embedding_model_name=embedding_model_name,
+        use_dummy_embeddings=use_dummy_embeddings,
+    )
 
     clf = LogisticRegression(class_weight="balanced", random_state=seed)
     clf.fit(x_train, y_train)
@@ -146,9 +169,23 @@ def train_and_evaluate(
         intercept=float(clf.intercept_[0]),
     )
 
-    learned_recall3 = _recall_at_k(texts, ids, val_queries, weights, k=3)
+    learned_recall3 = _recall_at_k(
+        texts,
+        ids,
+        val_queries,
+        weights,
+        k=3,
+        embedding_model_name=embedding_model_name,
+        use_dummy_embeddings=use_dummy_embeddings,
+    )
     fixed_alpha_recall3 = _recall_at_k(
-        texts, ids, val_queries, RerankerWeights(coef_bm25=1.0, coef_embed=1.0, intercept=0.0), k=3
+        texts,
+        ids,
+        val_queries,
+        RerankerWeights(coef_bm25=1.0, coef_embed=1.0, intercept=0.0),
+        k=3,
+        embedding_model_name=embedding_model_name,
+        use_dummy_embeddings=use_dummy_embeddings,
     )
 
     weights_path.parent.mkdir(parents=True, exist_ok=True)
@@ -156,6 +193,9 @@ def train_and_evaluate(
 
     return {
         "seed": seed,
+        "embedding_model_name": embedding_model_name,
+        "use_dummy_embeddings": use_dummy_embeddings,
+        "weights_path": str(weights_path),
         "n_train_pairs": int(len(y_train)),
         "n_val_pairs": int(len(y_val)),
         "n_train_queries": len(train_queries),

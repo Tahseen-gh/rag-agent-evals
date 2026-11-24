@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from .backends.base import RetrievalBackend
 from .backends.bm25 import BM25Backend
 from .backends.embed import DummyEmbeddingModel, EmbeddingBackend, EmbeddingModel
 from .backends.hybrid import HybridBackend
-from .backends.learned import LearnedRerankBackend
+from .backends.learned import DEFAULT_WEIGHTS_PATH, REAL_EMBED_WEIGHTS_PATH, LearnedRerankBackend
 from .ingestion import load_corpus
+
+logger = logging.getLogger(__name__)
 
 _DOC_TEXTS, _DOC_IDS = load_corpus()
 DOCS_BY_ID: dict[str, str] = dict(zip(_DOC_IDS, _DOC_TEXTS, strict=True))
@@ -56,7 +59,25 @@ def get_backend(
         backend = HybridBackend(bm, em, alpha=hybrid_alpha)
     elif name == "learned":
         model = _embedding_model(embedding_model, use_dummy_embeddings)
-        backend = LearnedRerankBackend(BM25Backend(), EmbeddingBackend(model))
+        # The reranker's weights were fit against one specific embedding signal
+        # (dummy hash-based vs. real sentence-transformer scores have different
+        # distributions), so which weights file we load must match which
+        # embedding model we're about to score with - loading dummy-trained
+        # weights against real embedding scores (or vice versa) is a silent
+        # train/serve mismatch, not just a suboptimal fit.
+        weights_path = DEFAULT_WEIGHTS_PATH if use_dummy_embeddings else REAL_EMBED_WEIGHTS_PATH
+        if not weights_path.exists():
+            logger.warning(
+                "No reranker weights at %s (real-embedding reranker not yet trained); "
+                "falling back to the dummy-trained weights at %s. Run "
+                "`USE_DUMMY_EMBEDDINGS=false python -m ml.train_loop` to fix this.",
+                weights_path,
+                DEFAULT_WEIGHTS_PATH,
+            )
+            weights_path = DEFAULT_WEIGHTS_PATH
+        backend = LearnedRerankBackend(
+            BM25Backend(), EmbeddingBackend(model), weights_path=weights_path
+        )
         backend.build(_DOC_TEXTS, _DOC_IDS)
     else:
         raise ValueError(f"unknown backend: {name}")
