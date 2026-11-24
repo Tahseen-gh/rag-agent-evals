@@ -28,6 +28,15 @@ your own key into the sidebar for that session).
 
 Run it locally: `pip install -r requirements.txt && streamlit run ui/app.py`
 
+**Want it fully offline / air-gapped, no Python install?** A standalone Windows
+build is available via the `Build Windows executable` GitHub Actions workflow
+(manual trigger, Actions tab -> artifact download) - it packages the same UI
+and code as a self-contained `.exe` using PyInstaller
+(`scripts/desktop_entry.py`). It's not auto-built on every push since it's a
+~15-20 minute Windows CI job; run it manually when you need a fresh build. No
+code signing yet, so Windows SmartScreen will warn on first run - "More info"
+-> "Run anyway".
+
 ## How it works
 
 1. **A knowledge base.** 24 documents on AI / retrieval / agent concepts,

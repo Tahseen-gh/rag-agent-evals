@@ -1,0 +1,68 @@
+name: Build Windows executable
+
+# Manual-only: this is a nice-to-have offline/air-gapped alternative to the
+# hosted Streamlit demo (see README "Try it"), not something that needs to
+# build on every push. PyInstaller + torch/sentence-transformers is a known
+# finicky combination - expect to iterate on --collect-all/--hidden-import
+# hints here if a build fails; see the comment in scripts/desktop_entry.py
+# for why the app's own source ships as --add-data rather than being frozen.
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          python -m pip install -U pip
+          python -m pip install -r requirements.txt
+          python -m pip install pyinstaller
+      - name: Build executable
+        run: >-
+          pyinstaller
+          --name domain-rag-evals
+          --onedir
+          --noconfirm
+          --collect-all streamlit
+          --collect-all sentence_transformers
+          --collect-all transformers
+          --collect-all torch
+          --collect-all tokenizers
+          --add-data "ui;ui"
+          --add-data "rag;rag"
+          --add-data "ml;ml"
+          --add-data "evals;evals"
+          --add-data "fastapi_app;fastapi_app"
+          --add-data "data;data"
+          scripts/desktop_entry.py
+      - name: Smoke-test the build (stays running past startup, no browser)
+        # The entrypoint ignores argv and always launches the Streamlit
+        # server (see scripts/desktop_entry.py), so this can't be an
+        # exe --help check - that would just start the full server and
+        # hang the job until the timeout. Instead: start it, give it time
+        # to get past import resolution (where PyInstaller + torch/
+        # sentence-transformers most often fails - ModuleNotFoundError,
+        # missing bundled data), then confirm it's still running rather
+        # than having already crashed.
+        shell: pwsh
+        run: |
+          $proc = Start-Process -FilePath "dist\domain-rag-evals\domain-rag-evals.exe" -PassThru
+          Start-Sleep -Seconds 30
+          if ($proc.HasExited) {
+            Write-Error "Process exited early (code $($proc.ExitCode)) - likely a missing import or a bundled data file PyInstaller didn't collect."
+            exit 1
+          }
+          Write-Host "Still running after 30s - startup and import resolution succeeded."
+          Stop-Process -Id $proc.Id -Force
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: domain-rag-evals-windows
+          path: dist/domain-rag-evals/
+          if-no-files-found: error
