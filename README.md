@@ -181,7 +181,8 @@ end-to-end numbers.
 
 Environment knobs:
 
-- `ANTHROPIC_API_KEY` (unset by default → dummy mode)
+- `EVAL_ANTHROPIC_API_KEY` or `ANTHROPIC_API_KEY` (unset by default → dummy
+  mode; the former takes priority - see `fastapi_app/app/config.py` for why)
 - `LLM_MODEL` (default `claude-sonnet-5`)
 - `USE_DUMMY_LLM` (default `true`)
 - `AGENT_MAX_TURNS` (default `6`)

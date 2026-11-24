@@ -1,4 +1,4 @@
-"""Update evaluation baseline and append changelog entry."""
+"""Update evaluation baseline and append a baseline-update log entry."""
 
 from __future__ import annotations
 
@@ -19,10 +19,10 @@ def main() -> None:
     shutil.copyfile(src, baseline)
 
     report = json.loads(src.read_text())
-    changelog = Path("evals/CHANGELOG.md")
-    changelog.parent.mkdir(exist_ok=True)
+    baseline_log = Path("evals/BASELINE_LOG.md")
+    baseline_log.parent.mkdir(exist_ok=True)
     line = f"- {datetime.datetime.utcnow().isoformat()} baseline from {src.name} (sha {report.get('git_sha')})\n"
-    with changelog.open("a") as f:
+    with baseline_log.open("a") as f:
         f.write(line)
     print(f"Baseline updated from {src}")
 

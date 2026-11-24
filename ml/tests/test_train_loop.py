@@ -1,5 +1,8 @@
 from pathlib import Path
 
+import pytest
+
+import ml.train_loop as train_loop_module
 from ml.reranker import RerankerWeights, train_and_evaluate
 from ml.train_loop import main
 
@@ -27,6 +30,12 @@ def test_reranker_weights_score_is_a_probability() -> None:
     assert weights.score(1.0, 1.0) > weights.score(0.0, 0.0)
 
 
-def test_main_writes_default_artifact() -> None:
+def test_main_writes_default_artifact(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # main() picks its weights_path from DEFAULT_WEIGHTS_PATH/REAL_EMBED_WEIGHTS_PATH
+    # (see ml/train_loop.py) - both must be redirected to tmp_path, or this test
+    # silently overwrites the checked-in production artifact on every run.
+    monkeypatch.setattr(train_loop_module, "DEFAULT_WEIGHTS_PATH", tmp_path / "dummy.json")
+    monkeypatch.setattr(train_loop_module, "REAL_EMBED_WEIGHTS_PATH", tmp_path / "real.json")
     report = main()
     assert "held_out_recall_at_3" in report
+    assert (tmp_path / "dummy.json").exists()

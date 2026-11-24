@@ -1,6 +1,7 @@
 ﻿# SECURITY.md
 
-**Reporting a vulnerability:** Please open a private advisory on GitHub or email SECURITY_CONTACT (replace).
+**Reporting a vulnerability:** Please open a private security advisory on
+this repository (GitHub → Security tab → "Report a vulnerability").
 
 ## Threat model (LLM/RAG-focused)
 - Prompt injection & data exfil → sanitize/strip HTML, never execute user content.

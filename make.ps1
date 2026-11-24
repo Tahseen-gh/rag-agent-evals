@@ -1,7 +1,7 @@
 ﻿param([Parameter(Mandatory=$true)][ValidateSet("setup","test","serve","lint","format","typecheck","docker-build","docker-run")]$t)
 function py { param($args) & python @args }
 switch ($t) {
-  "setup"        { py -m pip install -r requirements.txt }
+  "setup"        { py -m pip install -r requirements.txt -r requirements-dev.txt }
   "test"         { py -m pytest -q }
   "serve"        { uvicorn fastapi_app.app.main:app --reload }
   "lint"         { ruff check . }
