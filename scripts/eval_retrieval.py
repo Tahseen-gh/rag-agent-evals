@@ -54,12 +54,9 @@ def load_queries(path: Path) -> list[dict[str, object]]:
 
 
 def compute_metrics(backend_name: str, k: int, seed: int, manifest_path: Path) -> dict[str, float]:
-    """Pure metric computation: no report wrapping, no file writes, no git.
-
-    Shared by the CLI (evaluate(), below) and the Streamlit UI's evals page -
-    the UI needs to compute live numbers on page load without leaving files
-    behind on every visitor's request.
-    """
+    """Pure metric computation, no file writes - shared by the CLI (evaluate(),
+    below) and the Streamlit evals page, which needs to compute numbers live
+    without writing files per visitor."""
     set_deterministic(seed)
     texts, ids = load_corpus(manifest_path)
     backend = get_backend(

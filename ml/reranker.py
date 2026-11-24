@@ -1,12 +1,7 @@
-"""Train a small logistic-regression reranker over BM25 + embedding scores.
-
-Replaces a hand-picked hybrid fusion weight (alpha) with one learned from
-real query-relevance pairs in data/queries.jsonl, using the same min-max
-score normalization the hand-tuned HybridBackend uses so the two are
-directly comparable. The learned weights are persisted to
-ml/artifacts/reranker_weights.json and consumed at request time by
-rag.backends.learned.LearnedRerankBackend (numpy-only, no sklearn
-dependency in the serving path).
+"""Trains a logistic-regression reranker over BM25 + embedding scores,
+learning the fusion weight instead of hand-picking alpha. Weights persist
+to ml/artifacts/reranker_weights.json, loaded at request time by
+rag.backends.learned.LearnedRerankBackend (no sklearn in the serving path).
 """
 
 from __future__ import annotations

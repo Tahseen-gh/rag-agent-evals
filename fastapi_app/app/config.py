@@ -37,12 +37,8 @@ class Settings(BaseSettings):
     rag_top_k: int = 4
 
     # Generation / agent
-    # EVAL_ANTHROPIC_API_KEY takes priority: some hosting environments reserve
-    # the bare ANTHROPIC_API_KEY name for their own internal runtime auth and
-    # never actually propagate a user-set value under that exact name into
-    # the process env, even though it shows as configured. ANTHROPIC_API_KEY
-    # is kept as a fallback for normal environments (e.g. plain `.env` files,
-    # CI) where no such collision exists.
+    # EVAL_ANTHROPIC_API_KEY first - some sandboxes reserve the bare
+    # ANTHROPIC_API_KEY name for their own auth. Falls back to it otherwise.
     anthropic_api_key: str | None = Field(
         default=None,
         validation_alias=AliasChoices("EVAL_ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY"),

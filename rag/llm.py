@@ -1,18 +1,9 @@
 """LLM client abstraction shared by rag/generation.py and rag/agent.py.
 
-Two implementations:
-  - AnthropicClient: calls the real Anthropic Messages API. Used when
-    settings.use_dummy_llm is False and an API key is configured.
-  - ExtractiveDummyClient: a deterministic, dependency-free fallback that
-    answers by quoting the most relevant retrieved passage instead of
-    calling any model. This is the default (settings.use_dummy_llm=True)
-    so tests and CI never require network access or an API key, and it
-    doubles as a legitimate no-key-configured degradation path rather than
-    a pure test mock.
-
-DummyToolCallClient (in this module too) drives a fixed, scripted
-tool-call-then-answer sequence, used to exercise the agent loop's
-mechanics in tests without a real model.
+AnthropicClient hits the real API. ExtractiveDummyClient is the no-key
+fallback (default) - just quotes the top passage, no model call, so tests
+and CI don't need network access. DummyToolCallClient below scripts a
+fixed tool-call-then-answer sequence for testing the agent loop.
 """
 
 from __future__ import annotations

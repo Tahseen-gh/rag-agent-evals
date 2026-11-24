@@ -1,11 +1,8 @@
 """A minimal tool-calling agent over the retrieval corpus.
 
-Unlike rag/generation.py (one fixed retrieve-then-generate call), this lets
-the model decide, turn by turn, whether to call the search_corpus tool
-again or give a final answer - the basic agent loop: send messages, execute
-any requested tool call, feed the result back, repeat until a final answer
-or a turn budget is hit. The turn budget is not optional: without it, a
-model stuck in an unproductive loop would run indefinitely.
+Model decides each turn whether to call search_corpus again or answer.
+Loop: send, execute any tool call, feed result back, repeat until answer
+or turn budget runs out (needed, or a stuck model loops forever).
 """
 
 from __future__ import annotations

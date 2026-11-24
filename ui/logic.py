@@ -1,9 +1,6 @@
 """Display-independent logic for the Streamlit UI (ui/app.py).
 
-Deliberately has no Streamlit import: every function here is a plain
-function over the same rag/ml modules the API and CLI scripts use, so it
-can be unit-tested without a display and reused if a different UI (e.g. a
-packaged desktop app) is ever built on top of it.
+No streamlit import - plain functions over rag/ml, unit-testable without a UI.
 """
 
 from __future__ import annotations
@@ -117,13 +114,8 @@ def run_retrieval_comparison(
 
 
 def get_eval_summary(*, k: int = 10, seed: int = 1337) -> dict[str, Any]:
-    """Live-recompute retrieval metrics for all four backends and retrain the
-    reranker, exactly as documented in docs/EXPERIMENTS.md - same deterministic
-    dummy embedding model, same corpus, same seed, so the numbers here match
-    that document. Real (non-dummy) embeddings need a Hugging Face model
-    download not guaranteed on a free hosted instance, so this always uses
-    the dummy model, same as the checked-in reference numbers.
-    """
+    """Recomputes retrieval metrics + retrains the reranker live, same corpus/
+    seed/dummy embeddings as docs/EXPERIMENTS.md so numbers match."""
     manifest_path = Path("data/manifest.json")
     retrieval_metrics = {name: compute_metrics(name, k, seed, manifest_path) for name in BACKENDS}
 

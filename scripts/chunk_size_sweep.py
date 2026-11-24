@@ -1,11 +1,8 @@
-"""Sweep chunk sizes and measure their effect on doc-level retrieval recall.
+"""Sweep chunk sizes, measure effect on doc-level retrieval recall.
 
-Chunks each corpus document at a range of max_chars values, indexes the
-chunks with BM25, and checks whether the correct source document appears
-among the distinct doc_ids of the top-k chunk hits. This is the concrete
-version of the chunking-strategy tradeoff described in
-data/corpus/chunking_strategies.txt: too-small chunks fragment context,
-too-large chunks dilute it.
+Chunks each doc at various max_chars, indexes with BM25, checks if the
+right doc shows up in the top-k hits. Too small fragments context, too
+large dilutes it - see data/corpus/chunking_strategies.txt.
 """
 
 from __future__ import annotations

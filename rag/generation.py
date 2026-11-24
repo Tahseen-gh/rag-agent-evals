@@ -1,10 +1,7 @@
 """Retrieve -> select context -> generate a cited answer.
 
-This is the "G" in RAG: rag/retriever.py alone only finds passages, it never
-turns them into an answer. answer_question() ties retrieval, chunking (to
-keep the prompt focused on the most relevant part of a retrieved document
-rather than the whole thing), and generation together, with every claim
-expected to carry a citation back to the passage that supports it.
+retriever.py just finds passages; answer_question() here chunks them down
+to the relevant part and generates an answer with citations back to source.
 """
 
 from __future__ import annotations

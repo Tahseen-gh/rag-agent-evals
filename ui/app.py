@@ -1,8 +1,6 @@
 """Streamlit UI for domain-rag-evals.
 
-Thin on purpose: every button here calls straight into ui/logic.py (which
-calls straight into rag/ and ml/, the same code the API and CI use) - no
-business logic lives in this file, only rendering.
+Just rendering - logic lives in ui/logic.py, same functions the API uses.
 
 Run locally: streamlit run ui/app.py
 """
@@ -15,9 +13,7 @@ from typing import Any
 
 import streamlit as st
 
-# `streamlit run ui/app.py` only puts ui/ itself on sys.path, not the repo
-# root - add it so `from ui.logic import ...` (and ui.logic's own imports of
-# rag/ml) resolve the same way they do under pytest.
+# streamlit only puts ui/ on sys.path, need repo root too for ui.logic's imports
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from ui.logic import ChatOutcome, get_eval_summary, run_chat, run_retrieval_comparison  # noqa: E402
@@ -27,10 +23,7 @@ st.set_page_config(page_title="domain-rag-evals", page_icon="🔎", layout="wide
 
 @st.cache_data(ttl=3600)
 def _cached_eval_summary() -> dict[str, Any]:
-    # get_eval_summary() retrains the reranker and reruns all four backends
-    # over the full query set (~15-20s) - cache so it's not repeated per
-    # visitor, only once per hour per deployment. Deterministic (fixed seed),
-    # so a cached result is exactly what a fresh computation would return.
+    # retrains the reranker + reruns all backends, takes ~15-20s, cache per hour
     return get_eval_summary()
 
 
@@ -138,11 +131,9 @@ elif page == "Retrieval Explorer":
 else:
     st.subheader("Live evals")
     st.caption(
-        "Computed live, not screenshotted (cached for an hour after the first visit) - "
-        "same corpus, seed, and deterministic dummy embedding model as "
-        "docs/EXPERIMENTS.md, so these numbers match that document. Real (non-dummy) "
-        "embeddings need a Hugging Face model download not guaranteed on a free "
-        "hosted instance."
+        "Computed live (cached 1hr), same corpus/seed as docs/EXPERIMENTS.md. "
+        "Uses the dummy embedding model here - real embeddings need a HF download "
+        "this instance may not have."
     )
     with st.spinner("Computing (first visit only - cached after)..."):
         summary = _cached_eval_summary()
@@ -161,7 +152,4 @@ else:
     c2.metric("Val accuracy", f"{report['val_accuracy']:.3f}")
     c3.metric("Val AUC", f"{report['val_auc']:.3f}")
     st.json(report["weights"])
-    st.caption(
-        "The negative coef_embed weight is the model discovering the dummy embedding "
-        "signal is noise and suppressing it - see docs/EXPERIMENTS.md#2 for why."
-    )
+    st.caption("coef_embed is negative here - dummy embeddings are noise, see EXPERIMENTS.md#2")
