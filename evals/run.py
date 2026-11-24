@@ -3,10 +3,12 @@
 Two judges run against each question: a deterministic heuristic judge
 (keyword coverage of the gold answer, plus whether the correct source doc
 was cited) that needs no API key and always runs, and an optional LLM-judge
-pass using a real Anthropic client when --llm-judge is passed and
-ANTHROPIC_API_KEY is set. Earlier versions of this script never called
-anything - it wrote "pred": "TBD" for every row without touching the RAG
-pipeline at all. This one actually runs it.
+pass using a real Anthropic client when --llm-judge is passed and an API key
+is reachable (EVAL_ANTHROPIC_API_KEY, falling back to ANTHROPIC_API_KEY -
+see fastapi_app/app/config.py:Settings.anthropic_api_key for why the former
+takes priority). Earlier versions of this script never called anything - it
+wrote "pred": "TBD" for every row without touching the RAG pipeline at all.
+This one actually runs it.
 """
 
 from __future__ import annotations
@@ -156,7 +158,8 @@ def run(
     else:
         summary["llm_judge_accuracy"] = None
         summary["note"] = (
-            "LLM judge skipped: pass --llm-judge with ANTHROPIC_API_KEY set to enable it."
+            "LLM judge skipped: pass --llm-judge with EVAL_ANTHROPIC_API_KEY "
+            "(or ANTHROPIC_API_KEY) set to enable it."
         )
 
     summary_path.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
@@ -186,7 +189,8 @@ def main() -> None:
         use_dummy_embeddings=args.use_dummy_embeddings,
         use_dummy_llm=args.use_dummy_llm,
         use_llm_judge=args.llm_judge,
-        anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY"),
+        anthropic_api_key=os.environ.get("EVAL_ANTHROPIC_API_KEY")
+        or os.environ.get("ANTHROPIC_API_KEY"),
         llm_model=args.llm_model,
     )
 

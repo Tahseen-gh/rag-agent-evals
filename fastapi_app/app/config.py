@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import Field
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -37,7 +37,16 @@ class Settings(BaseSettings):
     rag_top_k: int = 4
 
     # Generation / agent
-    anthropic_api_key: str | None = None
+    # EVAL_ANTHROPIC_API_KEY takes priority: some hosting environments reserve
+    # the bare ANTHROPIC_API_KEY name for their own internal runtime auth and
+    # never actually propagate a user-set value under that exact name into
+    # the process env, even though it shows as configured. ANTHROPIC_API_KEY
+    # is kept as a fallback for normal environments (e.g. plain `.env` files,
+    # CI) where no such collision exists.
+    anthropic_api_key: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("EVAL_ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY"),
+    )
     llm_model: str = "claude-sonnet-5"
     use_dummy_llm: bool = True
     agent_max_turns: int = 6
