@@ -14,13 +14,15 @@ computed end to end, with reproduction commands.
 
 ## Try it
 
-**[Live demo](https://your-app-name.streamlit.app)** *(deploy `ui/app.py` on
-[Streamlit Community Cloud](https://share.streamlit.io) and swap this link)* —
-ask a question, compare retrieval backends side by side, and see the eval
-numbers computed live in your browser. No API key needed by default
-(retrieval, the agent loop, and evals are all fully real either way; only the
-final generation step is a deterministic stand-in unless you paste your own
-key into the sidebar for that session).
+No hosted demo is live right now (that needs a Streamlit Community Cloud
+account to deploy to, which isn't something a repo can carry for you) - but
+you can deploy your own in one click:
+**[Deploy to Streamlit Community Cloud](https://share.streamlit.io/deploy?repository=Tahseen-gh/rag-agent-evals&branch=main&mainModule=ui/app.py)**.
+Once deployed: ask a question, compare retrieval backends side by side, and
+see the eval numbers computed live in your browser. No API key needed by
+default (retrieval, the agent loop, and evals are all fully real either way;
+only the final generation step is a deterministic stand-in unless you paste
+your own key into the sidebar for that session).
 
 ![Demo: asking a question, comparing retrieval backends, and live eval numbers](docs/images/demo.gif)
 

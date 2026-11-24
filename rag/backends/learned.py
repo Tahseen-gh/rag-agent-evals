@@ -11,6 +11,9 @@ from .embed import EmbeddingBackend
 DEFAULT_WEIGHTS_PATH = (
     Path(__file__).resolve().parents[2] / "ml" / "artifacts" / "reranker_weights.json"
 )
+REAL_EMBED_WEIGHTS_PATH = (
+    Path(__file__).resolve().parents[2] / "ml" / "artifacts" / "reranker_weights_real_embed.json"
+)
 
 
 def _minmax(scores: list[float]) -> list[float]:
