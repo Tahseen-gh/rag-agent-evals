@@ -3,39 +3,35 @@
 **A question-answering system that looks things up before it answers.**
 
 Ask it a question and it searches a document corpus first, retrieves what's
-relevant, and writes a cited answer — instead of guessing from memory. It's the
-same core idea behind support bots that answer from a company's docs, or coding
-assistants that consult documentation before replying.
+relevant, and writes a cited answer instead of guessing from memory. Same core
+idea as support bots that answer from company docs, or coding assistants that
+check documentation before replying.
 
-Everything below is measured, not asserted: real retrieval, real generation
-(Anthropic Claude), a tool-calling agent, a learned reranker, and evals with
-real numbers — see [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md) for every result
-computed end to end, with reproduction commands.
+Everything below is measured, not asserted. Real retrieval, real generation
+(Anthropic Claude), a tool-calling agent, a learned reranker, evals with real
+numbers - see [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md) for every result and
+how to reproduce it.
 
 ## Try it
 
-No hosted demo is live right now (that needs a Streamlit Community Cloud
-account to deploy to, which isn't something a repo can carry for you) - but
-you can deploy your own in one click:
+No hosted demo right now (needs a Streamlit Community Cloud account, which a
+repo can't carry for you) - deploy your own in one click:
 **[Deploy to Streamlit Community Cloud](https://share.streamlit.io/deploy?repository=Tahseen-gh/rag-agent-evals&branch=main&mainModule=ui/app.py)**.
 Once deployed: ask a question, compare retrieval backends side by side, and
 see the eval numbers computed live in your browser. No API key needed by
-default (retrieval, the agent loop, and evals are all fully real either way;
-only the final generation step is a deterministic stand-in unless you paste
-your own key into the sidebar for that session).
+default - retrieval, the agent loop, and evals are all real either way; only
+generation falls back to a dummy unless you paste a key in the sidebar.
 
 ![Demo: asking a question, comparing retrieval backends, and live eval numbers](docs/images/demo.gif)
 
 Run it locally: `pip install -r requirements.txt && streamlit run ui/app.py`
 
-**Want it fully offline / air-gapped, no Python install?** A standalone Windows
-build is available via the `Build Windows executable` GitHub Actions workflow
-(manual trigger, Actions tab -> artifact download) - it packages the same UI
-and code as a self-contained `.exe` using PyInstaller
-(`scripts/desktop_entry.py`). It's not auto-built on every push since it's a
-~15-20 minute Windows CI job; run it manually when you need a fresh build. No
-code signing yet, so Windows SmartScreen will warn on first run - "More info"
--> "Run anyway".
+**Want it offline, no Python install?** Standalone Windows build via the
+`Build Windows executable` Actions workflow (manual trigger, Actions tab ->
+download artifact) - same UI packaged as a self-contained `.exe` with
+PyInstaller (`scripts/desktop_entry.py`). Manual-trigger only, it's a
+~15-20 min Windows CI job. Unsigned, so SmartScreen will warn on first run -
+"More info" -> "Run anyway".
 
 ## How it works
 
@@ -46,11 +42,11 @@ code signing yet, so Windows SmartScreen will warn on first run - "More info"
    blend of the two, and a version where a small trained model *learned* the
    best blend instead of a human guessing it.
 3. **Answer generation.** The retrieved documents are passed to Claude, which
-   writes an answer with citations back to the specific source — so you can
-   check where a claim came from instead of taking it on trust.
-4. **Agent mode.** Rather than a single search-then-answer pass, the model can
-   decide for itself to search again when the first result wasn't enough — like
-   a research assistant that keeps digging until it's satisfied, then stops.
+   writes an answer with citations back to the specific source, so claims are
+   traceable.
+4. **Agent mode.** Instead of one search-then-answer pass, the model decides
+   for itself whether to search again when the first result wasn't enough,
+   then stops once it has what it needs.
 5. **Evals.** The part most demo projects skip. Each search method and each
    generated answer has real accuracy and quality numbers attached, so you can
    see which approach is actually better and by how much.
@@ -58,10 +54,9 @@ code signing yet, so Windows SmartScreen will warn on first run - "More info"
 ## Why it exists
 
 As a working system, this is the architecture behind "ask questions about our
-internal docs / product / codebase" tools. As a portfolio piece, it's here to
-demonstrate the day-to-day work of an AI engineer: not just calling an LLM API,
-but building the retrieval pipeline around it, wiring up an agent, and proving
-with numbers that the thing works.
+internal docs / product / codebase" tools. As a portfolio piece, it demonstrates
+the day-to-day work of an AI engineer: building the retrieval pipeline around an
+LLM call, wiring up an agent, and proving with numbers that it works.
 
 ## What's in it
 
@@ -204,10 +199,9 @@ NDCG@10. The `Retrieval evals (quality gates)` workflow runs `bm25`, `embed`,
 and `hybrid` and **hard-gates only on `bm25`** against `evals/baseline.json`
 (failing if `recall@3`, `MRR`, or `NDCG@10` drop by more than
 `ALLOWED_REGRESSION_DELTA`, default `0.01`). `embed`/`hybrid` are reported but
-not gated, since they depend on downloading a model from Hugging Face — a
-network dependency a hard CI gate shouldn't be able to flake on; `bm25` needs
-nothing beyond what's already installed. Real current metrics for every backend
-are in
+not gated - they need a Hugging Face model download, and a hard CI gate
+shouldn't flake on network access; `bm25` needs nothing extra. Real current
+metrics for every backend are in
 [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md#1-retrieval-backend-comparison).
 
 Generation quality is scored separately: `python -m evals.run --backend hybrid`
@@ -230,8 +224,8 @@ determinism.
 
 - **Bandit** runs in **pre-commit** and in CI (job **security / bandit**). The
   CI job is **blocking** for MEDIUM/HIGH severity & confidence findings.
-- **pip-audit** runs in CI (job **security / pip-audit**) and currently **does
-  not block**. We'll flip it to blocking after triage.
+- **pip-audit** runs in CI (job **security / pip-audit**); **not blocking yet**
+  - findings need triage first.
 - **Dependabot** is enabled for `pip` (grouped runtime/dev) and **GitHub
   Actions** (grouped), with weekly updates and auto-rebase. Look for labels
   `dependencies` and `security`.
